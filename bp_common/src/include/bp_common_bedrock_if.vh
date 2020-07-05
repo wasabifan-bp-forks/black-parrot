@@ -168,6 +168,17 @@ typedef enum logic [3:0]
   ,e_bedrock_mem_uc_wr   = 4'b0011  // Uncached store (uncached in L2/LLC)
   ,e_bedrock_mem_pre     = 4'b0100  // Pre-fetch block request from CCE, fill into L2/LLC if able
   // 4'b0101 - 4'b1111 reserved // custom
+  ,e_bedrock_mem_lr       = 4'b0101
+  ,e_bedrock_mem_sc       = 4'b0110
+  ,e_bedrock_mem_amo_swap = 4'b0111
+  ,e_bedrock_mem_amo_add  = 4'b1000
+  ,e_bedrock_mem_amo_xor  = 4'b1001
+  ,e_bedrock_mem_amo_and  = 4'b1010
+  ,e_bedrock_mem_amo_or   = 4'b1011
+  ,e_bedrock_mem_amo_min  = 4'b1100
+  ,e_bedrock_mem_amo_max  = 4'b1101
+  ,e_bedrock_mem_amo_minu = 4'b1110
+  ,e_bedrock_mem_amo_maxu = 4'b1111
 } bp_bedrock_mem_type_e;
 
 /*
