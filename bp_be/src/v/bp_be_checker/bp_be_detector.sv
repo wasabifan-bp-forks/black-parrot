@@ -24,6 +24,7 @@ module bp_be_detector
    , localparam cfg_bus_width_lp = `cfg_bus_width(vaddr_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p)
    , localparam isd_status_width_lp = `bp_be_isd_status_width(vaddr_width_p, branch_metadata_fwd_width_p)
    , localparam dispatch_pkt_width_lp = `bp_be_dispatch_pkt_width(vaddr_width_p)
+   , localparam commit_pkt_width_lp = `bp_be_commit_pkt_width(vaddr_width_p)
    , localparam wb_pkt_width_lp     = `bp_be_wb_pkt_width(vaddr_width_p)
    )
   (input                               clk_i
@@ -44,6 +45,7 @@ module bp_be_detector
    // Pipeline control signals from the checker to the calculator
    , output                            chk_dispatch_v_o
    , input [dispatch_pkt_width_lp-1:0] dispatch_pkt_i
+   , input [commit_pkt_width_lp-1:0]   commit_pkt_i
    , input [wb_pkt_width_lp-1:0]       iwb_pkt_i
    , input [wb_pkt_width_lp-1:0]       fwb_pkt_i
    );
@@ -57,10 +59,12 @@ module bp_be_detector
   // Casting
   bp_be_isd_status_s       isd_status_cast_i;
   bp_be_dispatch_pkt_s     dispatch_pkt;
+  bp_be_commit_pkt_s       commit_pkt;
   bp_be_wb_pkt_s           iwb_pkt, fwb_pkt;
 
   assign isd_status_cast_i  = isd_status_i;
   assign dispatch_pkt       = dispatch_pkt_i;
+  assign commit_pkt         = commit_pkt_i;
   assign iwb_pkt            = iwb_pkt_i;
   assign fwb_pkt            = fwb_pkt_i;
 
@@ -83,16 +87,21 @@ module bp_be_detector
   logic long_haz_v;
   logic mem_in_pipe_v;
 
-  wire [reg_addr_width_gp-1:0] score_rd_li = dispatch_pkt.instr.t.fmatype.rd_addr;
-  wire [reg_addr_width_gp-1:0] score_rs1_li = dispatch_pkt.instr.t.fmatype.rs1_addr;
-  wire [reg_addr_width_gp-1:0] score_rs2_li = dispatch_pkt.instr.t.fmatype.rs2_addr;
-  wire [reg_addr_width_gp-1:0] score_rs3_li = dispatch_pkt.instr.t.fmatype.rs3_addr;
+  wire [reg_addr_width_gp-1:0] score_rd_li =
+    commit_pkt.dcache_miss ? commit_pkt.instr.t.fmatype.rd_addr : dispatch_pkt.instr.t.fmatype.rd_addr;
+  wire [reg_addr_width_gp-1:0] score_rs1_li =
+    commit_pkt.dcache_miss ? commit_pkt.instr.t.fmatype.rs1_addr : dispatch_pkt.instr.t.fmatype.rs1_addr;
+  wire [reg_addr_width_gp-1:0] score_rs2_li =
+    commit_pkt.dcache_miss ? commit_pkt.instr.t.fmatype.rs2_addr : dispatch_pkt.instr.t.fmatype.rs2_addr;
+  wire [reg_addr_width_gp-1:0] score_rs3_li =
+    commit_pkt.dcache_miss ? commit_pkt.instr.t.fmatype.rs3_addr : dispatch_pkt.instr.t.fmatype.rs3_addr;
   wire [reg_addr_width_gp-1:0] clear_ird_li = iwb_pkt.rd_addr;
   wire [reg_addr_width_gp-1:0] clear_frd_li = fwb_pkt.rd_addr;
 
   logic [1:0] irs_match_lo;
   logic       ird_match_lo;
-  wire score_int_v_li = (dispatch_pkt.v & ~dispatch_pkt.poison) & dispatch_pkt.decode.late_iwb_v;
+  wire score_int_v_li = ((dispatch_pkt.v & ~dispatch_pkt.poison) & dispatch_pkt.decode.late_iwb_v)
+    || (commit_pkt.v & commit_pkt.dcache_miss & commit_pkt.instr.t.fmatype.opcode == `RV64_LOAD_OP);
   wire clear_int_v_li = iwb_pkt.ird_w_v & iwb_pkt.late;
   bp_be_scoreboard
    #(.bp_params_p(bp_params_p), .num_rs_p(2))
@@ -114,7 +123,8 @@ module bp_be_detector
 
   logic [2:0] frs_match_lo;
   logic       frd_match_lo;
-  wire score_fp_v_li = (dispatch_pkt.v & ~dispatch_pkt.poison) & dispatch_pkt.decode.late_fwb_v;
+  wire score_fp_v_li = ((dispatch_pkt.v & ~dispatch_pkt.poison) & dispatch_pkt.decode.late_fwb_v)
+    || (commit_pkt.v & commit_pkt.dcache_miss & commit_pkt.instr.t.fmatype.opcode == `RV64_FLOAD_OP);
   wire clear_fp_v_li = fwb_pkt.frd_w_v & fwb_pkt.late;
   bp_be_scoreboard
    #(.bp_params_p(bp_params_p), .num_rs_p(3))

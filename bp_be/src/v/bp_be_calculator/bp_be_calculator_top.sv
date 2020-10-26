@@ -94,7 +94,7 @@ module bp_be_calculator_top
 
   // Cast input and output ports
   bp_be_dispatch_pkt_s   dispatch_pkt;
-  bp_be_wb_pkt_s         long_iwb_pkt, long_fwb_pkt;
+  bp_be_wb_pkt_s         long_iwb_pkt, long_fwb_pkt, calc_iwb_pkt, calc_fwb_pkt, mem_iwb_pkt, mem_fwb_pkt;
   bp_be_commit_pkt_s     commit_pkt;
 
   assign dispatch_pkt = dispatch_pkt_i;
@@ -125,6 +125,7 @@ module bp_be_calculator_top
 
   logic pipe_ctl_data_lo_v, pipe_int_data_lo_v, pipe_aux_data_lo_v, pipe_mem_early_data_lo_v, pipe_mem_final_data_lo_v, pipe_sys_data_lo_v, pipe_mul_data_lo_v, pipe_fma_data_lo_v;
   logic pipe_long_idata_lo_v, pipe_long_idata_lo_yumi, pipe_long_fdata_lo_v, pipe_long_fdata_lo_yumi;
+  logic pipe_mem_late_idata_lo_v, pipe_mem_late_fdata_lo_v;
   logic [dpath_width_gp-1:0] pipe_ctl_data_lo, pipe_int_data_lo, pipe_aux_data_lo, pipe_mem_early_data_lo, pipe_mem_final_data_lo, pipe_sys_data_lo, pipe_mul_data_lo, pipe_fma_data_lo;
   rv64_fflags_s pipe_aux_fflags_lo, pipe_fma_fflags_lo;
 
@@ -299,6 +300,10 @@ module bp_be_calculator_top
      ,.final_data_o(pipe_mem_final_data_lo)
      ,.early_v_o(pipe_mem_early_data_lo_v)
      ,.final_v_o(pipe_mem_final_data_lo_v)
+     ,.late_iwb_pkt_o(mem_iwb_pkt)
+     ,.late_iwb_pkt_v_o(pipe_mem_late_idata_lo_v)
+     ,.late_fwb_pkt_o(mem_fwb_pkt)
+     ,.late_fwb_pkt_v_o(pipe_mem_late_fdata_lo_v)
 
      ,.trans_info_i(trans_info_lo)
      );
@@ -495,8 +500,8 @@ module bp_be_calculator_top
   assign pipe_long_idata_lo_yumi = pipe_long_idata_lo_v & ~comp_stage_r[4].ird_w_v;
   assign pipe_long_fdata_lo_yumi = pipe_long_fdata_lo_v & ~comp_stage_r[5].frd_w_v & ~comp_stage_r[5].fflags_w_v;
 
-  assign iwb_pkt_o = pipe_long_idata_lo_yumi ? long_iwb_pkt : comp_stage_r[4];
-  assign fwb_pkt_o = pipe_long_fdata_lo_yumi ? long_fwb_pkt : comp_stage_r[5];
+  assign iwb_pkt_o = pipe_mem_late_idata_lo_v ? mem_iwb_pkt : pipe_long_idata_lo_yumi ? long_iwb_pkt : comp_stage_r[4];
+  assign fwb_pkt_o = pipe_mem_late_fdata_lo_v ? mem_fwb_pkt : pipe_long_fdata_lo_yumi ? long_fwb_pkt : comp_stage_r[5];
 
   assign mem_ready_o  = pipe_mem_ready_lo;
   assign long_ready_o = pipe_long_ready_lo;

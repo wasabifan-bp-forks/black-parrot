@@ -383,10 +383,6 @@ module bp_be_dcache
   wire amomaxu_req = v_tv_r & decode_tv_r.amomaxu_op;
   wire l2_amo_req  = v_tv_r & decode_tv_r.l2_op;
 
-  // Uncached and L2 atomic refactor
-  logic uncached_load_data_v_r;
-  logic [dword_width_gp-1:0] uncached_load_data_r;
-
   // load reserved / store conditional
   logic lr_hit_tv;
   logic sc_success;
@@ -431,7 +427,7 @@ module bp_be_dcache
 
   // Fail if we have a store conditional without success
   assign sc_fail     = v_tv_r & decode_tv_r.sc_op & ~sc_success;
-  assign uncached_load_req = v_tv_r & decode_tv_r.load_op & uncached_tv_r & ~uncached_load_data_v_r;
+  assign uncached_load_req = v_tv_r & decode_tv_r.load_op & uncached_tv_r;
   assign uncached_store_req = v_tv_r & decode_tv_r.store_op & uncached_tv_r;
   assign fencei_req = v_tv_r & decode_tv_r.fencei_op;
 
@@ -667,7 +663,7 @@ module bp_be_dcache
       cache_req_cast_o.msg_type = e_wt_store;
       cache_req_v_o = ~flush_i;
     end
-    else if (l2_amo_req & ~uncached_load_data_v_r) begin
+    else if (l2_amo_req) begin
       cache_req_v_o = ~flush_i;
       unique if (lr_req)
         cache_req_cast_o.msg_type = e_amo_lr;
@@ -745,8 +741,7 @@ module bp_be_dcache
 
   assign ready_o = ~cache_req_busy_i & is_ready;
 
-  assign early_v_o = v_tv_r & ( (uncached_tv_r & (decode_tv_r.load_op & uncached_load_data_v_r))
-                              | (uncached_tv_r & (decode_tv_r.store_op & cache_req_yumi_i))
+  assign early_v_o = v_tv_r & ((uncached_tv_r & (decode_tv_r.store_op & cache_req_yumi_i))
                               | (~uncached_tv_r & ~decode_tv_r.l2_op & ~decode_tv_r.fencei_op & ~miss_tv)
                               // Always send fencei when coherent
                               | (fencei_req & (~gdirty_r | (l1_coherent_p == 1)))
@@ -806,7 +801,6 @@ module bp_be_dcache
 
   logic [bank_width_lp-1:0] ld_data_way_picked;
   logic [dword_width_gp-1:0] ld_data_dword_picked;
-  logic [dword_width_gp-1:0] ld_data_final;
   logic [dword_width_gp-1:0] bypass_data_masked;
   logic [dcache_assoc_p-1:0] ld_data_way_select;
 
@@ -846,16 +840,6 @@ module bp_be_dcache
     ,.data_o(bypass_data_masked)
   );
 
-  logic [dword_width_gp-1:0] result_data;
-  bsg_mux #(
-    .width_p(dword_width_gp)
-    ,.els_p(2)
-  ) final_data_mux (
-    .data_i({uncached_load_data_r, bypass_data_masked})
-    ,.sel_i(uncached_tv_r)
-    ,.data_o(result_data)
-  );
-
   logic [3:0][dword_width_gp-1:0] sigext_data;
   for (genvar i = 0; i < 4; i++)
     begin : alignment
@@ -866,7 +850,7 @@ module bp_be_dcache
         .width_p(slice_width_lp)
         ,.els_p(dword_width_gp/slice_width_lp)
       ) align_mux (
-        .data_i(result_data)
+        .data_i(bypass_data_masked)
         ,.sel_i(paddr_tv_r[i+:`BSG_MAX(1, 3-i)])
         ,.data_o(slice_data)
       );
@@ -875,45 +859,72 @@ module bp_be_dcache
       assign sigext_data[i] = {{(dword_width_gp-slice_width_lp){sigext}}, slice_data};
     end
 
-  logic [dword_width_gp-1:0] final_data;
+  logic [dword_width_gp-1:0] early_data;
   bsg_mux_one_hot #(
     .width_p(dword_width_gp)
     ,.els_p(4)
   ) byte_mux (
     .data_i(sigext_data)
     ,.sel_one_hot_i({decode_tv_r.double_op, decode_tv_r.word_op, decode_tv_r.half_op, decode_tv_r.byte_op})
-    ,.data_o(final_data)
+    ,.data_o(early_data)
   );
 
   assign early_data_o = (decode_tv_r.load_op | (sc_req & decode_tv_r.l2_op))
-    ? final_data
+    ? early_data
     : decode_tv_r.sc_op & ~sc_success;
 
   // DM stage
   //
+  localparam snoop_offset_width_p = `BSG_SAFE_CLOG2(dcache_fill_width_p/dword_width_p);
+
   logic dm_we;
   logic v_dm_r;
   logic [dword_width_gp-1:0] data_dm_r;
   logic [3:0] byte_offset_dm_r;
+  logic [snoop_offset_width_p-1:0] snoop_offset_dm_r;
   logic double_op_dm_r, word_op_dm_r, half_op_dm_r, byte_op_dm_r;
   logic signed_op_dm_r, float_op_dm_r;
 
-  assign dm_we = v_tv_r & early_v_o;
+  logic [dword_width_p-1:0] snoop_word;
+  wire [snoop_offset_width_p-1:0] snoop_word_offset = snoop_offset_dm_r;
+  bsg_mux
+   #(.width_p(dword_width_p), .els_p(dcache_fill_width_p/dword_width_p))
+   snoop_mux
+    (.data_i(data_mem_pkt.data)
+     ,.sel_i(snoop_word_offset)
+     ,.data_o(snoop_word)
+     );
+
+  logic [dword_width_p-1:0] data_dm_n;
+  bsg_mux
+   #(.width_p(dword_width_p), .els_p(2))
+   ld_data_mux
+    (.data_i({snoop_word, early_data})
+     ,.sel_i(cache_req_critical_i)
+     ,.data_o(data_dm_n)
+     );
+
+  assign dm_we = v_tv_r;
   always_ff @(posedge clk_i) begin
     if (reset_i) begin
       v_dm_r <= '0;
     end else begin
-      v_dm_r <= dm_we & ~flush_i;
+      v_dm_r <= (dm_we & early_v_o & ~flush_i) | cache_req_critical_i;
 
       if (dm_we) begin
-        data_dm_r        <= early_data_o;
-        byte_offset_dm_r <= paddr_tv_r[0+:4];
-        signed_op_dm_r   <= decode_tv_r.signed_op;
-        float_op_dm_r    <= decode_tv_r.float_op;
-        double_op_dm_r   <= decode_tv_r.double_op;
-        word_op_dm_r     <= decode_tv_r.word_op;
-        half_op_dm_r     <= decode_tv_r.half_op;
-        byte_op_dm_r     <= decode_tv_r.byte_op;
+        data_dm_r          <= data_dm_n;
+        byte_offset_dm_r   <= paddr_tv_r[0+:4];
+        signed_op_dm_r     <= decode_tv_r.signed_op;
+        float_op_dm_r      <= decode_tv_r.float_op;
+        double_op_dm_r     <= decode_tv_r.double_op;
+        word_op_dm_r       <= decode_tv_r.word_op;
+        half_op_dm_r       <= decode_tv_r.half_op;
+        byte_op_dm_r       <= decode_tv_r.byte_op;
+        snoop_offset_dm_r  <= paddr_tv_r[2+:snoop_offset_width_p];
+      end
+
+      if (cache_req_critical_i) begin
+        data_dm_r          <= data_dm_n;
       end
     end
   end
@@ -1212,33 +1223,6 @@ module bp_be_dcache
       assign load_reserved_tag_r = '0;
       assign load_reserved_index_r = '0;
     end
-
-  //  uncached load data logic
-  //
-  wire uncached_load_set = data_mem_pkt_yumi_o & (data_mem_pkt.opcode == e_cache_data_mem_uncached);
-  // Invalidate uncached data if the cache is flushed or we successfully complete the request
-  // NOTE: This method is not valid for non-idempotent loads, will cause replay
-  wire uncached_load_clear = flush_i | early_v_o;
-  bsg_dff_reset_set_clear
-   #(.width_p(1))
-   uncached_load_data_v_reg
-    (.clk_i(clk_i)
-     ,.reset_i(reset_i)
-
-     ,.set_i(uncached_load_set)
-     ,.clear_i(uncached_load_clear)
-     ,.data_o(uncached_load_data_v_r)
-     );
-
-  bsg_dff_en
-   #(.width_p(dword_width_gp))
-   uncached_load_data_reg
-    (.clk_i(clk_i)
-     ,.en_i(uncached_load_set)
-
-     ,.data_i(data_mem_pkt.data[0+:dword_width_gp])
-     ,.data_o(uncached_load_data_r)
-     );
 
   // LCE tag_mem
 

@@ -142,6 +142,7 @@ module bp_be_top
 
      ,.chk_dispatch_v_o(chk_dispatch_v)
      ,.dispatch_pkt_i(dispatch_pkt)
+     ,.commit_pkt_i(commit_pkt)
      ,.iwb_pkt_i(iwb_pkt)
      ,.fwb_pkt_i(fwb_pkt)
      );
