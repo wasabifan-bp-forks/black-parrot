@@ -131,9 +131,9 @@ void bp_call_zipline_accelerator(uint8_t type, struct Zipline_CSR zipline_csrs, 
   uint64_t *cfg_base_addr;
   uint64_t *cfg_base_dma_addr;
 
-  cfg_base_addr = (uint64_t *)(0x02100000);//device 1/compression engine in the tile
-  cfg_base_dma_addr = (uint64_t *)(0x02200000);//dma device id
-  bp_set_mmio_csr(cfg_base_addr, RESP_PTR, (uint64_t) zipline_csrs.resp_ptr);
+  cfg_base_addr = (uint64_t *)(0x02100000);//device 1 in the tile/compression engine
+  cfg_base_dma_addr = (uint64_t *)(0x02200000);//device 2 in the tile/dma engine
+
   //send input
   int i=0;
   for (i=0; i < input_tlv_num; i++)
@@ -141,55 +141,8 @@ void bp_call_zipline_accelerator(uint8_t type, struct Zipline_CSR zipline_csrs, 
     bp_set_mmio_csr(cfg_base_addr, TLV_TYPE, zipline_csrs.input_ptr[i].type);
     bp_hw_dma(cfg_base_dma_addr, zipline_csrs.input_ptr[i].data_ptr, zipline_csrs.input_ptr[i].length);
   }
-
-  //receive output
-  uint64_t status;
-  while (1)
-    {
-      status = bp_get_mmio_csr(cfg_base_addr, RESP_DONE);
-      if(status)
-        break;
-    }
-  
-}
-
-/*void bp_call_zipline_accelerator(uint8_t type, struct VDP_CSR vdp_csrs, struct zipline_tlv *tlv_headers, uint64_t tlv_num)
-{
-  uint64_t *cfg_base_addr;
-  uint64_t csr_value;
-  uint64_t *cfg_base_dma_addr;
-
-  uint64_t *sac_cfg = (uint64_t *) 0x0020000a;
-  bp_set_mmio_csr(sac_cfg, 0, 1);//enable sac mem region csr
-  cfg_base_addr = (uint64_t *)(0x02100000);//chnage the device id to dma in the tile
-  uint64_t tlv_count =0;
-  int i=0;
-  for(i=0; i < tlv_num; i++){
-    if((tlv_headers[i].tlv_idx == 1) | (tlv_headers[i].tlv_idx == 3)){//sot
-      tlv_count = 0;
-      bp_set_mmio_csr(cfg_base_addr, TLV_TYPE, tlv_headers[i].header_type);
-      bp_set_mmio_csr(cfg_base_addr, TLV_IDX,  tlv_headers[i].tlv_idx);
-      dma_cpy((uint64_t *) &(tlv_headers[i].tlv_header), SACCEL_VDP_MEM_BASE+i, 1);
-    }
-    else if (tlv_headers[i].tlv_idx == 2){//eot
-      bp_set_mmio_csr(cfg_base_addr, TLV_IDX,  tlv_headers[i].tlv_idx);
-      dma_cpy((uint64_t *) &(tlv_headers[i].tlv_header), SACCEL_VDP_MEM_BASE+i, 1);
-    }
-    else{//middle tlvs
-      if(tlv_count == 0)
-        bp_set_mmio_csr(cfg_base_addr, TLV_IDX,  tlv_headers[i].tlv_idx);
-      tlv_count ++;
-      dma_cpy((uint64_t *) &(tlv_headers[i].tlv_header), SACCEL_VDP_MEM_BASE+i, 1);
-    }
+  if(type){
+    dma_cpy(SACCEL_VDP_MEM_BASE, zipline_csrs.resp_ptr, 10);
   }
-
-  cfg_base_dma_addr = (uint64_t *)(0x02200000);//dma device id
-  bp_set_mmio_csr(cfg_base_dma_addr, 0, (uint64_t) vdp_csrs.tlv_header_ptr);//set dma 
-   
-  //change the device id to cce engine in the tile
-  cfg_base_addr = SACCEL_VDP_BASE_ADDR;  
-  csr_value=bp_get_mmio_csr(cfg_base_addr, 0);
-  dma_cpy((uint64_t *) &csr_value, vdp_csrs.resp_ptr, 1);
-
 }
-*/
+
