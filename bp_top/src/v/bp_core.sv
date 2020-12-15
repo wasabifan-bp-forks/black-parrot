@@ -18,34 +18,34 @@ module bp_core
    `declare_bp_cache_engine_if_widths(paddr_width_p, ptag_width_p, dcache_sets_p, dcache_assoc_p, dword_width_p, dcache_block_width_p, dcache_fill_width_p, dcache)
 
    , localparam cfg_bus_width_lp = `bp_cfg_bus_width(vaddr_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p, cce_pc_width_p, cce_instr_width_p)
-  )
- (input                                          clk_i
-  , input                                        reset_i
+   )
+   (input                                          clk_i
+    , input                                        reset_i
 
-  , input [cfg_bus_width_lp-1:0]                 cfg_bus_i
+    , input [cfg_bus_width_lp-1:0]                 cfg_bus_i
 
-  // LCE-CCE interface
-  , output [1:0][lce_req_msg_width_lp-1:0]       lce_req_o
-  , output [1:0]                                 lce_req_v_o
-  , input [1:0]                                  lce_req_ready_i
+    // LCE-CCE interface
+    , output [1:0][lce_req_msg_width_lp-1:0]       lce_req_o
+    , output [1:0]                                 lce_req_v_o
+    , input [1:0]                                  lce_req_ready_then_i
 
-  , output [1:0][lce_resp_msg_width_lp-1:0]      lce_resp_o
-  , output [1:0]                                 lce_resp_v_o
-  , input [1:0]                                  lce_resp_ready_i
+    , output [1:0][lce_resp_msg_width_lp-1:0]      lce_resp_o
+    , output [1:0]                                 lce_resp_v_o
+    , input [1:0]                                  lce_resp_ready_then_i
 
-  // CCE-LCE interface
-  , input [1:0][lce_cmd_msg_width_lp-1:0]        lce_cmd_i
-  , input [1:0]                                  lce_cmd_v_i
-  , output [1:0]                                 lce_cmd_yumi_o
+    // CCE-LCE interface
+    , input [1:0][lce_cmd_msg_width_lp-1:0]        lce_cmd_i
+    , input [1:0]                                  lce_cmd_v_i
+    , output [1:0]                                 lce_cmd_yumi_o
 
-  , output [1:0][lce_cmd_msg_width_lp-1:0]       lce_cmd_o
-  , output [1:0]                                 lce_cmd_v_o
-  , input [1:0]                                  lce_cmd_ready_i
+    , output [1:0][lce_cmd_msg_width_lp-1:0]       lce_cmd_o
+    , output [1:0]                                 lce_cmd_v_o
+    , input [1:0]                                  lce_cmd_ready_then_i
 
-  , input                                        timer_irq_i
-  , input                                        software_irq_i
-  , input                                        external_irq_i
-  );
+    , input                                        timer_irq_i
+    , input                                        software_irq_i
+    , input                                        external_irq_i
+    );
 
   `declare_bp_cfg_bus_s(vaddr_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p, cce_pc_width_p, cce_instr_width_p);
   `declare_bp_cache_engine_if(paddr_width_p, ptag_width_p, icache_sets_p, icache_assoc_p, dword_width_p, icache_block_width_p, icache_fill_width_p, icache);
@@ -206,11 +206,11 @@ module bp_core
 
      ,.lce_req_o(lce_req_o[0])
      ,.lce_req_v_o(lce_req_v_o[0])
-     ,.lce_req_ready_i(lce_req_ready_i[0])
+     ,.lce_req_ready_then_i(lce_req_ready_then_i[0])
 
      ,.lce_resp_o(lce_resp_o[0])
      ,.lce_resp_v_o(lce_resp_v_o[0])
-     ,.lce_resp_ready_i(lce_resp_ready_i[0])
+     ,.lce_resp_ready_then_i(lce_resp_ready_then_i[0])
 
      ,.lce_cmd_i(lce_cmd_i[0])
      ,.lce_cmd_v_i(lce_cmd_v_i[0])
@@ -218,7 +218,7 @@ module bp_core
 
      ,.lce_cmd_o(lce_cmd_o[0])
      ,.lce_cmd_v_o(lce_cmd_v_o[0])
-     ,.lce_cmd_ready_i(lce_cmd_ready_i[0])
+     ,.lce_cmd_ready_then_i(lce_cmd_ready_then_i[0])
      );
 
   bp_lce
@@ -267,11 +267,11 @@ module bp_core
 
      ,.lce_req_o(lce_req_o[1])
      ,.lce_req_v_o(lce_req_v_o[1])
-     ,.lce_req_ready_i(lce_req_ready_i[1])
+     ,.lce_req_ready_then_i(lce_req_ready_then_i[1])
 
      ,.lce_resp_o(lce_resp_o[1])
      ,.lce_resp_v_o(lce_resp_v_o[1])
-     ,.lce_resp_ready_i(lce_resp_ready_i[1])
+     ,.lce_resp_ready_then_i(lce_resp_ready_then_i[1])
 
      ,.lce_cmd_i(lce_cmd_i[1])
      ,.lce_cmd_v_i(lce_cmd_v_i[1])
@@ -279,7 +279,7 @@ module bp_core
 
      ,.lce_cmd_o(lce_cmd_o[1])
      ,.lce_cmd_v_o(lce_cmd_v_o[1])
-     ,.lce_cmd_ready_i(lce_cmd_ready_i[1])
+     ,.lce_cmd_ready_then_i(lce_cmd_ready_then_i[1])
      );
 
 endmodule
