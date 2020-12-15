@@ -923,10 +923,12 @@ typedef struct packed {
   bp_bedrock_msg_size_e                    msg_size;
   bp_cce_inst_dst_q_sel_e                  pushq_qsel;
   bp_cce_inst_src_q_sel_e                  popq_qsel;
+  // inbound messages
   logic                                    lce_req_yumi;
   logic                                    lce_resp_yumi;
   logic                                    mem_resp_yumi;
   logic                                    pending_yumi;
+  // outbound messages
   logic                                    lce_cmd_v;
   bp_bedrock_cmd_type_e                    lce_cmd;
   logic                                    mem_cmd_v;

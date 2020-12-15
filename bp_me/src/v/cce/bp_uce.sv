@@ -75,7 +75,7 @@ module bp_uce
 
     , output [uce_mem_msg_width_lp-1:0]              mem_cmd_o
     , output logic                                   mem_cmd_v_o
-    , input                                          mem_cmd_ready_i
+    , input                                          mem_cmd_ready_then_i
 
     , input [uce_mem_msg_width_lp-1:0]               mem_resp_i
     , input                                          mem_resp_v_i
@@ -387,7 +387,7 @@ module bp_uce
   //
   logic [`BSG_WIDTH(coh_noc_max_credits_p)-1:0] credit_count_lo;
   wire credit_v_li = mem_cmd_v_o;
-  wire credit_ready_li = mem_cmd_ready_i;
+  wire credit_ready_li = mem_cmd_ready_then_i;
   // credit is returned when request completes
   // UC store done for UC Store, UC Data for UC Load, Set Tag Wakeup for
   // a miss that is actually an upgrade, and data and tag for normal requests.
@@ -540,7 +540,7 @@ module bp_uce
             mem_cmd_cast_payload.lce_id    = lce_id_i;
             mem_cmd_cast_o.header.payload = mem_cmd_cast_payload;
             mem_cmd_cast_o.data                  = writeback_data;
-            mem_cmd_v_o = mem_cmd_ready_i & dirty_data_v_r & dirty_tag_v_r;
+            mem_cmd_v_o = mem_cmd_ready_then_i & dirty_data_v_r & dirty_tag_v_r;
             mem_cmd_up = mem_cmd_v_o;
 
             way_up = mem_cmd_done & mem_cmd_v_o;
@@ -564,7 +564,7 @@ module bp_uce
           begin
             // TODO: ready shouldn't depend on credits, the cache should
             //   handle the flow control
-            cache_req_yumi_o = cache_req_v_i & mem_cmd_ready_i & ~cache_req_credits_full_o;
+            cache_req_yumi_o = cache_req_v_i & mem_cmd_ready_then_i & ~cache_req_credits_full_o;
             if (uc_store_v_li)
               begin
                 mem_cmd_cast_o.header.msg_type       = e_bedrock_mem_uc_wr;
@@ -605,7 +605,7 @@ module bp_uce
               mem_cmd_cast_payload.way_id          = lce_assoc_p'(cache_req_metadata_r.repl_way);
               mem_cmd_cast_payload.lce_id          = lce_id_i;
               mem_cmd_cast_o.header.payload = mem_cmd_cast_payload;
-              mem_cmd_v_o = mem_cmd_ready_i & cache_req_metadata_v_r;
+              mem_cmd_v_o = mem_cmd_ready_then_i & cache_req_metadata_v_r;
               mem_cmd_up = mem_cmd_v_o;
               state_n = mem_cmd_v_o
                         ? cache_req_metadata_r.dirty
@@ -620,7 +620,7 @@ module bp_uce
               mem_cmd_cast_o.header.size           = bp_bedrock_msg_size_e'(cache_req_r.size);
               mem_cmd_cast_payload.lce_id          = lce_id_i;
               mem_cmd_cast_o.header.payload = mem_cmd_cast_payload;
-              mem_cmd_v_o = mem_cmd_ready_i;
+              mem_cmd_v_o = mem_cmd_ready_then_i;
 
               state_n = mem_cmd_v_o ? e_uc_read_wait : e_send_critical;
             end
@@ -671,7 +671,7 @@ module bp_uce
             mem_cmd_cast_payload.way_id          = lce_assoc_p'(cache_req_metadata_r.repl_way);
             mem_cmd_cast_payload.lce_id          = lce_id_i;
             mem_cmd_cast_o.header.payload = mem_cmd_cast_payload;
-            mem_cmd_v_o = mem_cmd_ready_i & ~mem_cmd_done_r & ~cache_req_credits_full_o;
+            mem_cmd_v_o = mem_cmd_ready_then_i & ~mem_cmd_done_r & ~cache_req_credits_full_o;
             mem_cmd_up = mem_cmd_v_o;
 
             cache_req_complete_o = fill_done & mem_cmd_done_r & tag_mem_pkt_yumi_i & data_mem_pkt_yumi_i;
@@ -685,7 +685,7 @@ module bp_uce
             mem_cmd_cast_payload.lce_id    = lce_id_i;
             mem_cmd_cast_o.header.payload = mem_cmd_cast_payload;
             mem_cmd_cast_o.data                  = writeback_data;
-            mem_cmd_v_o = mem_cmd_ready_i & dirty_data_v_r & dirty_tag_v_r;
+            mem_cmd_v_o = mem_cmd_ready_then_i & dirty_data_v_r & dirty_tag_v_r;
             mem_cmd_up = mem_cmd_v_o;
 
             writeback_complete = mem_cmd_done & mem_cmd_v_o;
@@ -718,7 +718,7 @@ module bp_uce
             mem_cmd_cast_payload.way_id          = lce_assoc_p'(cache_req_metadata_r.repl_way);
             mem_cmd_cast_payload.lce_id          = lce_id_i;
             mem_cmd_cast_o.header.payload = mem_cmd_cast_payload;
-            mem_cmd_v_o = mem_cmd_ready_i & ~mem_cmd_done_r & ~cache_req_credits_full_o;
+            mem_cmd_v_o = mem_cmd_ready_then_i & ~mem_cmd_done_r & ~cache_req_credits_full_o;
             mem_cmd_up = mem_cmd_v_o;
 
             cache_req_complete_o = fill_done & mem_cmd_done_r & tag_mem_pkt_yumi_i & data_mem_pkt_yumi_i;

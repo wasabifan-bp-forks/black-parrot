@@ -19,7 +19,7 @@ module bp_io_cce
 
    , output logic [lce_cmd_msg_width_lp-1:0]  lce_cmd_o
    , output logic                             lce_cmd_v_o
-   , input                                    lce_cmd_ready_i
+   , input                                    lce_cmd_ready_then_i
 
    , input [cce_mem_msg_width_lp-1:0]         io_resp_i
    , input                                    io_resp_v_i
@@ -27,7 +27,7 @@ module bp_io_cce
 
    , output logic [cce_mem_msg_width_lp-1:0]  io_cmd_o
    , output logic                             io_cmd_v_o
-   , input                                    io_cmd_ready_i
+   , input                                    io_cmd_ready_then_i
 
    );
 
@@ -51,7 +51,7 @@ module bp_io_cce
   assign io_resp_cast_i = io_resp_i;
   assign io_cmd_o       = io_cmd_cast_o;
 
-  assign lce_req_yumi_o  = lce_req_v_i & io_cmd_ready_i;
+  assign lce_req_yumi_o  = lce_req_v_i & io_cmd_ready_then_i;
   assign io_cmd_v_o      = lce_req_yumi_o;
   wire lce_req_wr_not_rd = (lce_req_cast_i.header.msg_type.req == e_bedrock_req_uc_wr);
   always_comb begin
@@ -66,7 +66,7 @@ module bp_io_cce
     io_cmd_cast_o.data                    = lce_req_cast_i.data;
   end
 
-  assign io_resp_yumi_o  = io_resp_v_i & lce_cmd_ready_i;
+  assign io_resp_yumi_o  = io_resp_v_i & lce_cmd_ready_then_i;
   assign lce_cmd_v_o     = io_resp_yumi_o;
   wire io_resp_wr_not_rd = (io_resp_cast_i.header.msg_type.mem == e_bedrock_mem_uc_wr);
   always_comb
