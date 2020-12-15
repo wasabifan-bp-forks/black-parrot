@@ -517,7 +517,14 @@ module wrapper
 
   end
   else begin: UCE
-    logic mem_resp_ready_lo;
+    // UCE-Mem connections - BP Lite - to/from ports
+    bp_bedrock_cce_mem_msg_s mem_cmd_lo;
+    assign mem_cmd_o = mem_cmd_lo;
+    bp_bedrock_cce_mem_msg_s cce_mem_resp_li;
+    logic cce_mem_resp_ready_lo;
+    assign cce_mem_resp_li = mem_resp_i;
+    assign mem_resp_yumi_o = mem_resp_v_i & cce_mem_resp_ready_lo;
+
     logic fifo_mem_resp_v_lo, fifo_mem_resp_yumi_li;
     bp_bedrock_cce_mem_msg_s fifo_mem_resp_lo;
 
