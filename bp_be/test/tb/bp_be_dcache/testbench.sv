@@ -243,7 +243,7 @@ module testbench
 
       ,.mem_cmd_i(mem_cmd_lo)
       ,.mem_cmd_v_i(mem_cmd_v_lo)
-      ,.mem_cmd_ready_o(mem_cmd_ready_lo)
+      ,.mem_cmd_ready_and_o(mem_cmd_ready_lo)
 
       ,.mem_resp_o(mem_resp_lo)
       ,.mem_resp_v_o(mem_resp_v_lo)
@@ -319,16 +319,16 @@ module testbench
           ,.lce_id_i(lce_id_i)
           ,.lce_req_i(lce_req_o)
           ,.lce_req_v_i(lce_req_v_o)
-          ,.lce_req_ready_i(lce_req_ready_i)
+          ,.lce_req_ready_then_i(lce_req_ready_then_i)
           ,.lce_resp_i(lce_resp_o)
           ,.lce_resp_v_i(lce_resp_v_o)
-          ,.lce_resp_ready_i(lce_resp_ready_i)
+          ,.lce_resp_ready_then_i(lce_resp_ready_then_i)
           ,.lce_cmd_i(lce_cmd_i)
           ,.lce_cmd_v_i(lce_cmd_v_i)
           ,.lce_cmd_yumi_i(lce_cmd_yumi_o)
           ,.lce_cmd_o_i(lce_cmd_o)
           ,.lce_cmd_o_v_i(lce_cmd_v_o)
-          ,.lce_cmd_o_ready_i(lce_cmd_ready_i)
+          ,.lce_cmd_o_ready_then_i(lce_cmd_ready_then_i)
           );
 
     bind bp_cce_fsm
@@ -341,29 +341,44 @@ module testbench
           ,.freeze_i(cfg_bus_cast_i.freeze)
           ,.cce_id_i(cfg_bus_cast_i.cce_id)
 
-          // To CCE
-          ,.lce_req_i(lce_req_i)
-          ,.lce_req_v_i(lce_req_v_i)
-          ,.lce_req_yumi_i(lce_req_yumi_o)
+          // LCE-CCE Interface
+          // BP Burst protocol: ready&valid
+          ,.lce_req_header_i(lce_req_header_i)
+          ,.lce_req_header_v_i(lce_req_header_v_i)
+          ,.lce_req_header_ready_and_i(lce_req_header_ready_and_o)
+          ,.lce_req_data_i(lce_req_data_i)
+          ,.lce_req_data_v_i(lce_req_data_v_i)
+          ,.lce_req_data_ready_and_i(lce_req_data_ready_and_o)
 
-          ,.lce_resp_i(lce_resp_i)
-          ,.lce_resp_v_i(lce_resp_v_i)
-          ,.lce_resp_yumi_i(lce_resp_yumi_o)
+          ,.lce_resp_header_i(lce_resp_header_i)
+          ,.lce_resp_header_v_i(lce_resp_header_v_i)
+          ,.lce_resp_header_ready_and_i(lce_resp_header_ready_and_o)
+          ,.lce_resp_data_i(lce_resp_data_i)
+          ,.lce_resp_data_v_i(lce_resp_data_v_i)
+          ,.lce_resp_data_ready_and_i(lce_resp_data_ready_and_o)
 
-          // From CCE
-          ,.lce_cmd_i(lce_cmd_o)
-          ,.lce_cmd_v_i(lce_cmd_v_o)
-          ,.lce_cmd_ready_i(lce_cmd_ready_i)
+          ,.lce_cmd_header_i(lce_cmd_header_o)
+          ,.lce_cmd_header_v_i(lce_cmd_header_v_o)
+          ,.lce_cmd_header_ready_and_i(lce_cmd_header_ready_and_i)
+          ,.lce_cmd_data_i(lce_cmd_data_o)
+          ,.lce_cmd_data_v_i(lce_cmd_data_v_o)
+          ,.lce_cmd_data_ready_and_i(lce_cmd_data_ready_and_i)
 
-          // To CCE
-          ,.mem_resp_i(mem_resp_i)
-          ,.mem_resp_v_i(mem_resp_v_i)
-          ,.mem_resp_yumi_i(mem_resp_yumi_o)
+          // CCE-MEM Interface
+          // BP Burst protocol: ready&valid
+          ,.mem_resp_header_i(mem_resp_header_i)
+          ,.mem_resp_header_v_i(mem_resp_header_v_i)
+          ,.mem_resp_header_ready_and_i(mem_resp_header_ready_and_o)
+          ,.mem_resp_data_i(mem_resp_data_i)
+          ,.mem_resp_data_v_i(mem_resp_data_v_i)
+          ,.mem_resp_data_ready_and_i(mem_resp_data_ready_and_o)
 
-          // From CCE
-          ,.mem_cmd_i(mem_cmd_o)
-          ,.mem_cmd_v_i(mem_cmd_v_o)
-          ,.mem_cmd_ready_i(mem_cmd_ready_i)
+          ,.mem_cmd_header_i(mem_cmd_header_o)
+          ,.mem_cmd_header_v_i(mem_cmd_header_v_o)
+          ,.mem_cmd_header_ready_and_i(mem_cmd_header_ready_and_i)
+          ,.mem_cmd_data_i(mem_cmd_data_o)
+          ,.mem_cmd_data_v_i(mem_cmd_data_v_o)
+          ,.mem_cmd_data_ready_and_i(mem_cmd_data_ready_and_i)
           );
   end
 
