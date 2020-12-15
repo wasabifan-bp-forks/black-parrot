@@ -31,7 +31,7 @@ module bp_mem
    // ready->valid (ready then valid)
    , input [cce_mem_msg_width_lp-1:0]    mem_cmd_i
    , input                               mem_cmd_v_i
-   , output                              mem_cmd_ready_o
+   , output                              mem_cmd_ready_and_o
 
    , output [cce_mem_msg_width_lp-1:0]   mem_resp_o
    , output                              mem_resp_v_o
@@ -52,7 +52,7 @@ if(use_ddr_p) begin: ddr
 
      ,.mem_cmd_i(mem_cmd_i)
      ,.mem_cmd_v_i(mem_cmd_v_i)
-     ,.mem_cmd_ready_o(mem_cmd_ready_o)
+     ,.mem_cmd_ready_o(mem_cmd_ready_and_o)
 
      ,.mem_resp_o(mem_resp_o)
      ,.mem_resp_v_o(mem_resp_v_o)
@@ -87,7 +87,7 @@ else if(use_dramsim3_p) begin: dramsim3
 
       ,.mem_cmd_i(mem_cmd_i)
       ,.mem_cmd_v_i(mem_cmd_v_i)
-      ,.mem_cmd_ready_o(mem_cmd_ready_o)
+      ,.mem_cmd_ready_o(mem_cmd_ready_and_o)
 
       ,.mem_resp_o(mem_resp_o)
       ,.mem_resp_v_o(mem_resp_v_o)
@@ -233,7 +233,7 @@ else begin: fixed_latency
 
       ,.mem_cmd_i(mem_cmd_i)
       ,.mem_cmd_v_i(mem_cmd_v_i)
-      ,.mem_cmd_ready_o(mem_cmd_ready_o)
+      ,.mem_cmd_ready_o(mem_cmd_ready_and_o)
 
       ,.mem_resp_o(mem_resp_o)
       ,.mem_resp_v_o(mem_resp_v_o)

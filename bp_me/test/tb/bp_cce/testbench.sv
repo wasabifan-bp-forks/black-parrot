@@ -21,7 +21,7 @@ module testbench
    , parameter cce_dir_trace_p = 0
    , parameter axe_trace_p = 0
    , parameter instr_count = 1
-   , parameter skip_init_p = 0
+   , parameter cce_mode_p = 0
    , parameter lce_trace_p = 0
    , parameter lce_tr_trace_p = 0
    , parameter dram_trace_p = 0
@@ -34,9 +34,8 @@ module testbench
    // CCE testing uses any address it wants, no DRAM offset required
    , parameter mem_offset_p       = '0
 
-   // size of CCE-Memory buffers for cmd/resp messages
-   // for this testbench (one LCE, one CCE, one memory) only need enough space to hold as many
-   // cmds/responses can be generated for a single LCE request
+   // memory response buffer size
+   // CCE may issue multiple memory commands before processing memory responses
    , parameter mem_buffer_els_lp         = 4
 
    // LCE Trace Replay Width
@@ -71,7 +70,7 @@ endfunction
 bp_cfg_bus_s             cfg_bus_lo;
 bp_bedrock_cce_mem_msg_s cfg_mem_cmd_lo;
 bp_bedrock_xce_mem_msg_s cfg_mem_cmd;
-logic                    cfg_mem_cmd_v_lo, cfg_mem_cmd_ready_li;
+logic                    cfg_mem_cmd_v_lo, cfg_mem_cmd_ready_and_li;
 assign cfg_mem_cmd = '{header: cfg_mem_cmd_lo.header
                       ,data: cfg_mem_cmd_lo.data[0+:dword_width_p]
                       };
@@ -80,7 +79,7 @@ assign cfg_mem_cmd = '{header: cfg_mem_cmd_lo.header
 bp_bedrock_cce_mem_msg_s mem_resp;
 logic                    mem_resp_v, mem_resp_yumi;
 bp_bedrock_cce_mem_msg_s mem_cmd;
-logic                    mem_cmd_v, mem_cmd_ready;
+logic                    mem_cmd_v, mem_cmd_ready_and;
 
 // LCE-CCE IF
 bp_bedrock_lce_req_msg_s  lce_req_lo, lce_req;
@@ -126,7 +125,7 @@ bsg_trace_node_master #(
 bp_me_nonsynth_mock_lce #(
   .bp_params_p(bp_params_p)
   ,.axe_trace_p(axe_trace_p)
-  ,.skip_init_p(skip_init_p)
+  ,.skip_init_p(cce_mode_p)
 ) lce (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
@@ -144,11 +143,11 @@ bp_me_nonsynth_mock_lce #(
 
   ,.lce_req_o(lce_req_lo)
   ,.lce_req_v_o(lce_req_v_lo)
-  ,.lce_req_ready_i(lce_req_ready_li)
+  ,.lce_req_ready_then_i(lce_req_ready_li)
 
   ,.lce_resp_o(lce_resp_lo)
   ,.lce_resp_v_o(lce_resp_v_lo)
-  ,.lce_resp_ready_i(lce_resp_ready_li)
+  ,.lce_resp_ready_then_i(lce_resp_ready_li)
 
   ,.lce_cmd_i(lce_cmd)
   ,.lce_cmd_v_i(lce_cmd_v)
@@ -156,7 +155,7 @@ bp_me_nonsynth_mock_lce #(
 
   ,.lce_cmd_o(lce_cmd_out_lo)
   ,.lce_cmd_v_o(lce_cmd_out_v_lo)
-  ,.lce_cmd_ready_i(lce_cmd_out_ready_li)
+  ,.lce_cmd_ready_then_i(lce_cmd_out_ready_li)
 );
 
 bind bp_me_nonsynth_mock_lce
@@ -172,16 +171,16 @@ bind bp_me_nonsynth_mock_lce
       ,.lce_id_i(lce_id_i)
       ,.lce_req_i(lce_req_o)
       ,.lce_req_v_i(lce_req_v_o)
-      ,.lce_req_ready_i(lce_req_ready_i)
+      ,.lce_req_ready_then_i(lce_req_ready_then_i)
       ,.lce_resp_i(lce_resp_o)
       ,.lce_resp_v_i(lce_resp_v_o)
-      ,.lce_resp_ready_i(lce_resp_ready_i)
+      ,.lce_resp_ready_then_i(lce_resp_ready_then_i)
       ,.lce_cmd_i(lce_cmd_i)
       ,.lce_cmd_v_i(lce_cmd_v_i)
       ,.lce_cmd_yumi_i(lce_cmd_yumi_o)
       ,.lce_cmd_o_i(lce_cmd_o)
       ,.lce_cmd_o_v_i(lce_cmd_v_o)
-      ,.lce_cmd_o_ready_i(lce_cmd_ready_i)
+      ,.lce_cmd_o_ready_then_i(lce_cmd_ready_then_i)
       );
 
 bind bp_me_nonsynth_mock_lce
@@ -212,28 +211,45 @@ bind bp_cce_wrapper
 
       ,.cce_id_i(cfg_bus_cast_i.cce_id)
 
-      // To CCE
-      ,.lce_req_i(lce_req_i)
-      ,.lce_req_v_i(lce_req_v_i)
-      ,.lce_req_yumi_i(lce_req_yumi_o)
-      ,.lce_resp_i(lce_resp_i)
-      ,.lce_resp_v_i(lce_resp_v_i)
-      ,.lce_resp_yumi_i(lce_resp_yumi_o)
+      // LCE-CCE Interface
+      // BP Burst protocol: ready&valid
+      ,.lce_req_header_i(lce_req_header_i)
+      ,.lce_req_header_v_i(lce_req_header_v_i)
+      ,.lce_req_header_ready_and_i(lce_req_header_ready_and_o)
+      ,.lce_req_data_i(lce_req_data_i)
+      ,.lce_req_data_v_i(lce_req_data_v_i)
+      ,.lce_req_data_ready_and_i(lce_req_data_ready_and_o)
 
-      // From CCE
-      ,.lce_cmd_i(lce_cmd_o)
-      ,.lce_cmd_v_i(lce_cmd_v_o)
-      ,.lce_cmd_ready_i(lce_cmd_ready_i)
+      ,.lce_resp_header_i(lce_resp_header_i)
+      ,.lce_resp_header_v_i(lce_resp_header_v_i)
+      ,.lce_resp_header_ready_and_i(lce_resp_header_ready_and_o)
+      ,.lce_resp_data_i(lce_resp_data_i)
+      ,.lce_resp_data_v_i(lce_resp_data_v_i)
+      ,.lce_resp_data_ready_and_i(lce_resp_data_ready_and_o)
 
-      // To CCE
-      ,.mem_resp_i(mem_resp_i)
-      ,.mem_resp_v_i(mem_resp_v_i)
-      ,.mem_resp_yumi_i(mem_resp_yumi_o)
+      ,.lce_cmd_header_i(lce_cmd_header_o)
+      ,.lce_cmd_header_v_i(lce_cmd_header_v_o)
+      ,.lce_cmd_header_ready_and_i(lce_cmd_header_ready_and_i)
+      ,.lce_cmd_data_i(lce_cmd_data_o)
+      ,.lce_cmd_data_v_i(lce_cmd_data_v_o)
+      ,.lce_cmd_data_ready_and_i(lce_cmd_data_ready_and_i)
 
-      // From CCE
-      ,.mem_cmd_i(mem_cmd_o)
-      ,.mem_cmd_v_i(mem_cmd_v_o)
-      ,.mem_cmd_ready_i(mem_cmd_ready_i)
+      // CCE-MEM Interface
+      // BP Burst protocol: ready&valid
+      ,.mem_resp_header_i(mem_resp_header_i)
+      ,.mem_resp_header_v_i(mem_resp_header_v_i)
+      ,.mem_resp_header_ready_and_i(mem_resp_header_ready_and_o)
+      ,.mem_resp_data_i(mem_resp_data_i)
+      ,.mem_resp_data_v_i(mem_resp_data_v_i)
+      ,.mem_resp_data_ready_and_i(mem_resp_data_ready_and_o)
+
+      ,.mem_cmd_header_i(mem_cmd_header_o)
+      ,.mem_cmd_header_v_i(mem_cmd_header_v_o)
+      ,.mem_cmd_header_ready_and_i(mem_cmd_header_ready_and_i)
+      ,.mem_cmd_data_i(mem_cmd_data_o)
+      ,.mem_cmd_data_v_i(mem_cmd_data_v_o)
+      ,.mem_cmd_data_ready_and_i(mem_cmd_data_ready_and_i)
+
       );
 
 bind bp_cce_dir
@@ -322,6 +338,101 @@ logic [cce_pc_width_p-1:0] cce_ucode_addr_li;
 logic [cce_instr_width_p-1:0] cce_ucode_data_li;
 logic [cce_instr_width_p-1:0] cce_ucode_data_lo;
 
+logic lce_req_header_v, lce_req_header_ready_and;
+logic lce_req_data_v, lce_req_data_ready_and;
+logic lce_resp_header_v, lce_resp_header_ready_and;
+logic lce_resp_data_v, lce_resp_data_ready_and;
+logic lce_cmd_header_v, lce_cmd_header_ready_and;
+logic lce_cmd_data_v, lce_cmd_data_ready_and;
+logic mem_resp_header_v, mem_resp_header_ready_and;
+logic mem_resp_data_v, mem_resp_data_ready_and;
+logic mem_cmd_header_v, mem_cmd_header_ready_and;
+logic mem_cmd_data_v, mem_cmd_data_ready_and;
+logic [dword_width_p-1:0] lce_req_data, lce_resp_data, lce_cmd_data, mem_cmd_data, mem_resp_data;
+bp_bedrock_cce_mem_msg_header_s mem_resp_header, mem_cmd_header;
+bp_bedrock_lce_req_msg_header_s lce_req_header;
+bp_bedrock_lce_resp_msg_header_s lce_resp_header;
+bp_bedrock_lce_cmd_msg_header_s lce_cmd_header;
+
+// LCE Request
+logic lce_req_ready;
+assign lce_req_yumi = lce_req_v & lce_req_ready;
+bp_lite_to_burst
+ #(.bp_params_p(bp_params_p)
+   ,.in_data_width_p(cce_block_width_p)
+   ,.out_data_width_p(dword_width_p)
+   ,.payload_width_p(lce_req_payload_width_lp)
+   ,.payload_mask_p(lce_req_payload_mask_gp)
+   )
+ lce_req_lite2burst
+  (.clk_i(clk_i)
+   ,.reset_i(reset_i)
+
+   ,.in_msg_i(lce_req)
+   ,.in_msg_v_i(lce_req_v)
+   ,.in_msg_ready_and_o(lce_req_ready)
+
+   ,.out_msg_header_o(lce_req_header)
+   ,.out_msg_header_v_o(lce_req_header_v)
+   ,.out_msg_header_ready_and_i(lce_req_header_ready_and)
+
+   ,.out_msg_data_o(lce_req_data)
+   ,.out_msg_data_v_o(lce_req_data_v)
+   ,.out_msg_data_ready_and_i(lce_req_data_ready_and)
+   );
+
+// LCE Response
+logic lce_resp_ready;
+assign lce_resp_yumi = lce_resp_v & lce_resp_ready;
+bp_lite_to_burst
+ #(.bp_params_p(bp_params_p)
+   ,.in_data_width_p(cce_block_width_p)
+   ,.out_data_width_p(dword_width_p)
+   ,.payload_width_p(lce_resp_payload_width_lp)
+   ,.payload_mask_p(lce_resp_payload_mask_gp)
+   )
+ lce_resp_lite2burst
+  (.clk_i(clk_i)
+   ,.reset_i(reset_i)
+
+   ,.in_msg_i(lce_resp)
+   ,.in_msg_v_i(lce_resp_v)
+   ,.in_msg_ready_and_o(lce_resp_ready)
+
+   ,.out_msg_header_o(lce_resp_header)
+   ,.out_msg_header_v_o(lce_resp_header_v)
+   ,.out_msg_header_ready_and_i(lce_resp_header_ready_and)
+
+   ,.out_msg_data_o(lce_resp_data)
+   ,.out_msg_data_v_o(lce_resp_data_v)
+   ,.out_msg_data_ready_and_i(lce_resp_data_ready_and)
+   );
+
+// LCE Command
+bp_burst_to_lite
+ #(.bp_params_p(bp_params_p)
+   ,.in_data_width_p(dword_width_p)
+   ,.out_data_width_p(cce_block_width_p)
+   ,.payload_width_p(lce_cmd_payload_width_lp)
+   ,.payload_mask_p(lce_cmd_payload_mask_gp)
+   )
+ lce_cmd_burst2lite
+  (.clk_i(clk_i)
+   ,.reset_i(reset_i)
+
+   ,.in_msg_header_i(lce_cmd_header)
+   ,.in_msg_header_v_i(lce_cmd_header_v)
+   ,.in_msg_header_ready_and_o(lce_cmd_header_ready_and)
+
+   ,.in_msg_data_i(lce_cmd_data)
+   ,.in_msg_data_v_i(lce_cmd_data_v)
+   ,.in_msg_data_ready_and_o(lce_cmd_data_ready_and)
+
+   ,.out_msg_o(lce_cmd_lo)
+   ,.out_msg_v_o(lce_cmd_v_lo)
+   ,.out_msg_ready_and_i(lce_cmd_ready_li)
+   );
+
 // CCE
 wrapper
 #(.bp_params_p(bp_params_p)
@@ -339,55 +450,71 @@ wrapper
   ,.ucode_data_i(cce_ucode_data_li)
   ,.ucode_data_o(cce_ucode_data_lo)
 
-  ,.lce_cmd_o(lce_cmd_lo)
-  ,.lce_cmd_v_o(lce_cmd_v_lo)
-  ,.lce_cmd_ready_i(lce_cmd_ready_li)
+  // LCE-CCE Interface
+  // BP Burst protocol: ready&valid
+  ,.lce_req_header_i(lce_req_header)
+  ,.lce_req_header_v_i(lce_req_header_v)
+  ,.lce_req_header_ready_and_o(lce_req_header_ready_and)
+  ,.lce_req_data_i(lce_req_data)
+  ,.lce_req_data_v_i(lce_req_data_v)
+  ,.lce_req_data_ready_and_o(lce_req_data_ready_and)
 
-  ,.lce_req_i(lce_req)
-  ,.lce_req_v_i(lce_req_v)
-  ,.lce_req_yumi_o(lce_req_yumi)
+  ,.lce_resp_header_i(lce_resp_header)
+  ,.lce_resp_header_v_i(lce_resp_header_v)
+  ,.lce_resp_header_ready_and_o(lce_resp_header_ready_and)
+  ,.lce_resp_data_i(lce_resp_data)
+  ,.lce_resp_data_v_i(lce_resp_data_v)
+  ,.lce_resp_data_ready_and_o(lce_resp_data_ready_and)
 
-  ,.lce_resp_i(lce_resp)
-  ,.lce_resp_v_i(lce_resp_v)
-  ,.lce_resp_yumi_o(lce_resp_yumi)
+  ,.lce_cmd_header_o(lce_cmd_header)
+  ,.lce_cmd_header_v_o(lce_cmd_header_v)
+  ,.lce_cmd_header_ready_and_i(lce_cmd_header_ready_and)
+  ,.lce_cmd_data_o(lce_cmd_data)
+  ,.lce_cmd_data_v_o(lce_cmd_data_v)
+  ,.lce_cmd_data_ready_and_i(lce_cmd_data_ready_and)
 
-  ,.mem_resp_i(mem_resp)
-  ,.mem_resp_v_i(mem_resp_v)
-  ,.mem_resp_yumi_o(mem_resp_yumi)
+  // CCE-MEM Interface
+  // BP Burst protocol: ready&valid
+  ,.mem_resp_header_i(mem_resp_header)
+  ,.mem_resp_header_v_i(mem_resp_header_v)
+  ,.mem_resp_header_ready_and_o(mem_resp_header_ready_and)
+  ,.mem_resp_data_i(mem_resp_data)
+  ,.mem_resp_data_v_i(mem_resp_data_v)
+  ,.mem_resp_data_ready_and_o(mem_resp_data_ready_and)
 
-  ,.mem_cmd_o(mem_cmd)
-  ,.mem_cmd_v_o(mem_cmd_v)
-  ,.mem_cmd_ready_i(mem_cmd_ready)
+  ,.mem_cmd_header_o(mem_cmd_header)
+  ,.mem_cmd_header_v_o(mem_cmd_header_v)
+  ,.mem_cmd_header_ready_and_i(mem_cmd_header_ready_and)
+  ,.mem_cmd_data_o(mem_cmd_data)
+  ,.mem_cmd_data_v_o(mem_cmd_data_v)
+  ,.mem_cmd_data_ready_and_i(mem_cmd_data_ready_and)
+
 );
 
+// MEM Command
+bp_burst_to_lite
+ #(.bp_params_p(bp_params_p)
+   ,.in_data_width_p(dword_width_p)
+   ,.out_data_width_p(cce_block_width_p)
+   ,.payload_width_p(cce_mem_payload_width_lp)
+   ,.payload_mask_p(mem_cmd_payload_mask_gp)
+   )
+ mem_cmd_burst2lite
+  (.clk_i(clk_i)
+   ,.reset_i(reset_i)
 
-// CCE-MEM Buffers
-// Since bp_mem only processes one command at a time, and the response must be consumed
-// before mem can process the next request, we need some buffering here. It is possible the
-// CCE issues a speculative memory access and then issues a second command (e.g., a writeback)
-// before resolving the speculation. This leads to a situation where the CCE can't consume the
-// memory response and is trying to send a memory command, but bp_mem is already "full," a.k.a.,
-// deadlock!
+   ,.in_msg_header_i(mem_cmd_header)
+   ,.in_msg_header_v_i(mem_cmd_header_v)
+   ,.in_msg_header_ready_and_o(mem_cmd_header_ready_and)
 
-// Memory Command Buffer
-bp_bedrock_cce_mem_msg_s mem_cmd_lo;
-logic                    mem_cmd_v_lo, mem_cmd_ready_lo;
-bsg_fifo_1r1w_small
-#(.width_p(cce_mem_msg_width_lp)
-  ,.els_p(mem_buffer_els_lp)
-  )
-mem_cmd_buffer
- (.clk_i(clk_i)
-  ,.reset_i(reset_i)
-  // from CCE
-  ,.v_i(mem_cmd_v)
-  ,.data_i(mem_cmd)
-  ,.ready_o(mem_cmd_ready)
-  // to memory
-  ,.v_o(mem_cmd_v_lo)
-  ,.data_o(mem_cmd_lo)
-  ,.yumi_i(mem_cmd_ready_lo & mem_cmd_v_lo)
-  );
+   ,.in_msg_data_i(mem_cmd_data)
+   ,.in_msg_data_v_i(mem_cmd_data_v)
+   ,.in_msg_data_ready_and_o(mem_cmd_data_ready_and)
+
+   ,.out_msg_o(mem_cmd)
+   ,.out_msg_v_o(mem_cmd_v)
+   ,.out_msg_ready_and_i(mem_cmd_ready_and)
+   );
 
 // Memory Response Buffer
 bp_bedrock_cce_mem_msg_s mem_resp_lo;
@@ -400,7 +527,7 @@ mem_resp_buffer
  (.clk_i(clk_i)
   ,.reset_i(reset_i)
   // from memory
-  ,.v_i(mem_resp_v_lo & mem_resp_ready_lo)
+  ,.v_i(mem_resp_v_lo)
   ,.data_i(mem_resp_lo)
   ,.ready_o(mem_resp_ready_lo)
   // to CCE
@@ -408,6 +535,33 @@ mem_resp_buffer
   ,.data_o(mem_resp)
   ,.yumi_i(mem_resp_yumi)
   );
+
+// MEM Response
+logic mem_resp_ready_and;
+assign mem_resp_yumi = mem_resp_v & mem_resp_ready_and;
+bp_lite_to_burst
+ #(.bp_params_p(bp_params_p)
+   ,.in_data_width_p(cce_block_width_p)
+   ,.out_data_width_p(dword_width_p)
+   ,.payload_width_p(cce_mem_payload_width_lp)
+   ,.payload_mask_p(mem_resp_payload_mask_gp)
+   )
+ mem_resp_lite2burst
+  (.clk_i(clk_i)
+   ,.reset_i(reset_i)
+
+   ,.in_msg_i(mem_resp)
+   ,.in_msg_v_i(mem_resp_v)
+   ,.in_msg_ready_and_o(mem_resp_ready_and)
+
+   ,.out_msg_header_o(mem_resp_header)
+   ,.out_msg_header_v_o(mem_resp_header_v)
+   ,.out_msg_header_ready_and_i(mem_resp_header_ready_and)
+
+   ,.out_msg_data_o(mem_resp_data)
+   ,.out_msg_data_v_o(mem_resp_data_v)
+   ,.out_msg_data_ready_and_i(mem_resp_data_ready_and)
+   );
 
 // DRAM
 bp_mem
@@ -424,9 +578,9 @@ mem
  (.clk_i(clk_i)
   ,.reset_i(reset_i)
 
-  ,.mem_cmd_i(mem_cmd_lo)
-  ,.mem_cmd_v_i(mem_cmd_v_lo & mem_cmd_ready_lo)
-  ,.mem_cmd_ready_o(mem_cmd_ready_lo)
+  ,.mem_cmd_i(mem_cmd)
+  ,.mem_cmd_v_i(mem_cmd_v)
+  ,.mem_cmd_ready_and_o(mem_cmd_ready_and)
 
   ,.mem_resp_o(mem_resp_lo)
   ,.mem_resp_v_o(mem_resp_v_lo)
@@ -444,7 +598,7 @@ bp_mem_nonsynth_tracer
 
    ,.mem_cmd_i(mem_cmd)
    ,.mem_cmd_v_i(mem_cmd_v)
-   ,.mem_cmd_ready_i(mem_cmd_ready)
+   ,.mem_cmd_ready_i(mem_cmd_ready_and)
 
    ,.mem_resp_i(mem_resp)
    ,.mem_resp_v_i(mem_resp_v)
@@ -461,7 +615,7 @@ bp_cfg
 
    ,.mem_cmd_i(cfg_mem_cmd)
    ,.mem_cmd_v_i(cfg_mem_cmd_v_lo)
-   ,.mem_cmd_ready_o(cfg_mem_cmd_ready_li)
+   ,.mem_cmd_ready_and_o(cfg_mem_cmd_ready_and_li)
 
    ,.mem_resp_o()
    ,.mem_resp_v_o(cfg_resp_v_lo)
@@ -487,7 +641,7 @@ always_ff @(posedge clk_i) begin
   if (reset_i) begin
     cfg_loader_resp_v <= '0;
   end else begin
-    cfg_loader_resp_v <= cfg_mem_cmd_v_lo & cfg_mem_cmd_ready_li;
+    cfg_loader_resp_v <= cfg_mem_cmd_v_lo & cfg_mem_cmd_ready_and_li;
   end
 end
 
@@ -498,7 +652,7 @@ bp_cce_mmio_cfg_loader
     ,.inst_width_p($bits(bp_cce_inst_s))
     ,.inst_ram_addr_width_p(cce_instr_ram_addr_width_lp)
     ,.inst_ram_els_p(num_cce_instr_ram_els_p)
-    ,.skip_ram_init_p(skip_init_p)
+    ,.skip_ram_init_p(cce_mode_p)
     ,.clear_freeze_p(1'b1)
   )
   cfg_loader
@@ -509,7 +663,7 @@ bp_cce_mmio_cfg_loader
 
    ,.io_cmd_o(cfg_mem_cmd_lo)
    ,.io_cmd_v_o(cfg_mem_cmd_v_lo)
-   ,.io_cmd_yumi_i(cfg_mem_cmd_ready_li & cfg_mem_cmd_v_lo)
+   ,.io_cmd_yumi_i(cfg_mem_cmd_ready_and_li & cfg_mem_cmd_v_lo)
 
    // Response port not used by module, except for flow control counter.
    // cfg_loader_resp_v is cfg_mem_cmd_yumi_li delayed one cycle through a
