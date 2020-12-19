@@ -371,7 +371,7 @@ package bp_common_aviary_pkg;
     '{cac_x_dim : 1
       ,sac_x_dim: 1
       ,cacc_type: e_cacc_vdp
-      ,sacc_type: e_sacc_zipline//e_sacc_vdp
+      ,sacc_type: e_sacc_cceip//e_sacc_cceip//e_sacc_vdp, e_sacc_cddip
       ,num_lce  : 3
       ,default : "inv"
       };

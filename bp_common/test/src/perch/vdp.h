@@ -32,13 +32,13 @@ struct VDP_CSR
 
 //Zipline CSR IDX
 #define TLV_TYPE       0 
-#define RESP_PTR       1
-#define RESP_DONE      2
+#define DATA_TLV_LEN   1
 //HW DMA CSR IDX 
 #define DATA_PTR       0
 #define DATA_LEN       1
 #define START_DMA      2
 #define DONE_DMA       3
+#define DMA_TYPE       4 //0:read, 1:write
 
 
 struct dma_cfg 
@@ -57,7 +57,7 @@ struct Zipline_CSR
 void bp_set_mmio_csr(uint64_t *accel_base_address, uint8_t csr_idx, uint64_t csr_value);
 uint64_t bp_get_mmio_csr(uint64_t *accel_base_address, uint8_t csr_idx); 
 void dma_cpy(uint64_t *src, uint64_t *dest, uint64_t length);
-void bp_hw_dma(uint64_t *cfg_base_dma_addr, uint64_t *src, uint64_t length);
+void bp_hw_dma(uint64_t *cfg_base_dma_addr, uint64_t *src, uint64_t length, uint64_t type);
 void bp_vdp_config_accelerator(uint64_t *base_cfg_addr, uint64_t *input_a_ptr,
                                uint64_t *input_b_ptr, uint64_t input_length, 
                                uint64_t operation, uint64_t *resp_ptr, uint64_t resp_length);
@@ -66,5 +66,5 @@ void bp_vdp_wait_for_completion(uint64_t *base_cfg_addr);
 void bp_call_vector_dot_product_accelerator(uint8_t type, struct VDP_CSR vdp_csrs);
 void bp_call_vector_add_accelerator(uint8_t type, struct VDP_CSR vdp_csrs);
 
-void bp_call_zipline_accelerator(uint8_t type, struct Zipline_CSR vdp_csrs, uint64_t input_tlv_num);
+uint64_t bp_call_zipline_accelerator(uint8_t type, struct Zipline_CSR vdp_csrs, uint64_t input_tlv_num);
 #endif

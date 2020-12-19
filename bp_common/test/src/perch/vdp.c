@@ -109,11 +109,13 @@ void bp_call_vector_add_accelerator(uint8_t type, struct VDP_CSR vdp_csrs){
   }
 }
 
-void bp_hw_dma(uint64_t *cfg_base_dma_addr, uint64_t *src, uint64_t length)
+void bp_hw_dma(uint64_t *cfg_base_dma_addr, uint64_t *src, uint64_t length, uint64_t type)
 {
   bp_set_mmio_csr(cfg_base_dma_addr, DATA_PTR, (uint64_t) src);
   bp_set_mmio_csr(cfg_base_dma_addr, DATA_LEN, length);
+  bp_set_mmio_csr(cfg_base_dma_addr, DMA_TYPE, type);
   bp_set_mmio_csr(cfg_base_dma_addr, START_DMA, 1);
+
   uint64_t status;
   while (1)
     {
@@ -121,9 +123,9 @@ void bp_hw_dma(uint64_t *cfg_base_dma_addr, uint64_t *src, uint64_t length)
       if(status)
         break;
     }
-
 }
-void bp_call_zipline_accelerator(uint8_t type, struct Zipline_CSR zipline_csrs, uint64_t input_tlv_num)
+
+uint64_t bp_call_zipline_accelerator(uint8_t type, struct Zipline_CSR zipline_csrs, uint64_t input_tlv_num)
 {
   uint64_t *sac_cfg = (uint64_t *) 0x0020000a;
   bp_set_mmio_csr(sac_cfg, 0, 1);//enable sac mem region csr
@@ -139,10 +141,14 @@ void bp_call_zipline_accelerator(uint8_t type, struct Zipline_CSR zipline_csrs, 
   for (i=0; i < input_tlv_num; i++)
   {
     bp_set_mmio_csr(cfg_base_addr, TLV_TYPE, zipline_csrs.input_ptr[i].type);
-    bp_hw_dma(cfg_base_dma_addr, zipline_csrs.input_ptr[i].data_ptr, zipline_csrs.input_ptr[i].length);
+    bp_hw_dma(cfg_base_dma_addr, zipline_csrs.input_ptr[i].data_ptr, zipline_csrs.input_ptr[i].length, 0);
   }
-  if(type){
-    dma_cpy(SACCEL_VDP_MEM_BASE, zipline_csrs.resp_ptr, 10);
-  }
+  
+  bp_hw_dma(cfg_base_dma_addr, zipline_csrs.resp_ptr, 0, 1);
+
+  uint64_t tlv_num;
+  tlv_num = bp_get_mmio_csr(cfg_base_addr, DATA_TLV_LEN);
+
+  return tlv_num;
 }
 
