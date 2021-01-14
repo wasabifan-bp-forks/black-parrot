@@ -140,7 +140,7 @@ module bp_l2e_tile
 
      ,.mem_cmd_i(cfg_mem_cmd)
      ,.mem_cmd_v_i(cfg_mem_cmd_v_li)
-     ,.mem_cmd_ready_o(cfg_mem_cmd_ready_lo)
+     ,.mem_cmd_ready_and_o(cfg_mem_cmd_ready_lo)
 
      ,.mem_resp_o(cfg_mem_resp)
      ,.mem_resp_v_o(cfg_mem_resp_v_lo)
@@ -176,40 +176,40 @@ module bp_l2e_tile
      // BP Burst protocol: ready&valid
      ,.lce_req_header_i(cce_lce_req_header)
      ,.lce_req_header_v_i(cce_lce_req_header_v)
-     ,.lce_req_header_ready_o(cce_lce_req_header_ready)
+     ,.lce_req_header_ready_and_o(cce_lce_req_header_ready)
      ,.lce_req_data_i(cce_lce_req_data)
      ,.lce_req_data_v_i(cce_lce_req_data_v)
-     ,.lce_req_data_ready_o(cce_lce_req_data_ready)
+     ,.lce_req_data_ready_and_o(cce_lce_req_data_ready)
 
      ,.lce_resp_header_i(cce_lce_resp_header)
      ,.lce_resp_header_v_i(cce_lce_resp_header_v)
-     ,.lce_resp_header_ready_o(cce_lce_resp_header_ready)
+     ,.lce_resp_header_ready_and_o(cce_lce_resp_header_ready)
      ,.lce_resp_data_i(cce_lce_resp_data)
      ,.lce_resp_data_v_i(cce_lce_resp_data_v)
-     ,.lce_resp_data_ready_o(cce_lce_resp_data_ready)
+     ,.lce_resp_data_ready_and_o(cce_lce_resp_data_ready)
 
      ,.lce_cmd_header_o(cce_lce_cmd_header)
      ,.lce_cmd_header_v_o(cce_lce_cmd_header_v)
-     ,.lce_cmd_header_ready_i(cce_lce_cmd_header_ready)
+     ,.lce_cmd_header_ready_and_i(cce_lce_cmd_header_ready)
      ,.lce_cmd_data_o(cce_lce_cmd_data)
      ,.lce_cmd_data_v_o(cce_lce_cmd_data_v)
-     ,.lce_cmd_data_ready_i(cce_lce_cmd_data_ready)
+     ,.lce_cmd_data_ready_and_i(cce_lce_cmd_data_ready)
 
      // CCE-MEM Interface
      // BP Burst protocol: ready&valid
      ,.mem_resp_header_i(cce_mem_resp_header)
      ,.mem_resp_header_v_i(cce_mem_resp_header_v)
-     ,.mem_resp_header_ready_o(cce_mem_resp_header_ready)
+     ,.mem_resp_header_ready_and_o(cce_mem_resp_header_ready)
      ,.mem_resp_data_i(cce_mem_resp_data)
      ,.mem_resp_data_v_i(cce_mem_resp_data_v)
-     ,.mem_resp_data_ready_o(cce_mem_resp_data_ready)
+     ,.mem_resp_data_ready_and_o(cce_mem_resp_data_ready)
 
      ,.mem_cmd_header_o(cce_mem_cmd_header)
      ,.mem_cmd_header_v_o(cce_mem_cmd_header_v)
-     ,.mem_cmd_header_ready_i(cce_mem_cmd_header_ready)
+     ,.mem_cmd_header_ready_and_i(cce_mem_cmd_header_ready)
      ,.mem_cmd_data_o(cce_mem_cmd_data)
      ,.mem_cmd_data_v_o(cce_mem_cmd_data_v)
-     ,.mem_cmd_data_ready_i(cce_mem_cmd_data_ready)
+     ,.mem_cmd_data_ready_and_i(cce_mem_cmd_data_ready)
      );
 
   `declare_bp_lce_req_wormhole_packet_s(coh_noc_flit_width_p, coh_noc_cord_width_p, coh_noc_len_width_p, coh_noc_cid_width_p, bp_bedrock_lce_req_msg_header_s, cce_block_width_p);
@@ -259,7 +259,7 @@ module bp_l2e_tile
 
     ,.link_data_i(lce_req_link_cast_i.data)
     ,.link_v_i(lce_req_link_cast_i.v)
-    ,.link_ready_and_o(cce_lce_req_link_lo.ready_and_rev)
+    ,.link_ready_and_o(lce_req_link_cast_o.ready_and_rev)
 
     ,.hdr_o(cce_lce_req_wh_header_pad)
     ,.hdr_v_o(cce_lce_req_header_v)
@@ -314,9 +314,9 @@ module bp_l2e_tile
     ,.data_v_i(cce_lce_cmd_data_v)
     ,.data_ready_and_o(cce_lce_cmd_data_ready)
 
-    ,.link_data_o(cce_lce_cmd_link_lo.data)
-    ,.link_v_o(cce_lce_cmd_link_lo.v)
-    ,.link_ready_and_i(cce_lce_cmd_link_li.ready_and_rev)
+    ,.link_data_o(lce_cmd_link_cast_o.data)
+    ,.link_v_o(lce_cmd_link_cast_o.v)
+    ,.link_ready_and_i(lce_cmd_link_cast_i.ready_and_rev)
     );
 
   // LCE to CCE response
@@ -350,7 +350,7 @@ module bp_l2e_tile
 
     ,.link_data_i(lce_resp_link_cast_i.data)
     ,.link_v_i(lce_resp_link_cast_i.v)
-    ,.link_ready_and_o(cce_lce_resp_link_lo.ready_and_rev)
+    ,.link_ready_and_o(lce_resp_link_cast_o.ready_and_rev)
 
     ,.hdr_o(cce_lce_resp_wh_header_pad)
     ,.hdr_v_o(cce_lce_resp_header_v)
