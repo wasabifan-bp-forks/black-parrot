@@ -1,5 +1,5 @@
 
-module bp_mem_to_dram
+module bp_lite_to_dram
 
   import bp_common_pkg::*;
   import bp_common_aviary_pkg::*;

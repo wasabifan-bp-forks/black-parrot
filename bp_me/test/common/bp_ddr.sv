@@ -14,13 +14,21 @@ module bp_ddr
   (input                                 clk_i
    , input                               reset_i
 
-   , input [cce_mem_msg_width_lp-1:0]    mem_cmd_i
-   , input                               mem_cmd_v_i
-   , output                              mem_cmd_ready_o
+   , input [cce_mem_msg_header_width_lp-1:0]  mem_cmd_header_i
+   , input                                    mem_cmd_header_v_i
+   , output                                   mem_cmd_header_ready_o
 
-   , output [cce_mem_msg_width_lp-1:0]   mem_resp_o
-   , output                              mem_resp_v_o
-   , input                               mem_resp_yumi_i
+   , input [dword_width_p-1:0]                mem_cmd_data_i
+   , input                                    mem_cmd_data_v_i
+   , output                                   mem_cmd_data_ready_o
+
+   , output [cce_mem_msg_header_width_lp-1:0] mem_resp_header_o
+   , output                                   mem_resp_header_v_o
+   , input                                    mem_resp_header_yumi_i
+
+   , output [dword_width_p-1:0]               mem_resp_data_o
+   , output                                   mem_resp_data_v_o
+   , input                                    mem_resp_data_yumi_i
    );
 
 `ifdef VERILATOR
@@ -140,11 +148,11 @@ module bp_ddr
   assign dmc_p.init_cycles  = {dmc_cfg_tag_data_lo[11], dmc_cfg_tag_data_lo[10]};
 
   // DRAM Link
-  logic mem_cmd_ready_lo, mem_resp_v_lo;
+  logic mem_cmd_header_ready_lo, mem_cmd_data_ready_lo, mem_resp_header_v_lo, mem_resp_data_v_lo;
   logic app_en_lo, app_rdy_li, app_wdf_wren_lo, app_wdf_end_lo, app_wdf_rdy_li, app_rd_data_valid_li, app_rd_data_end_li;
   logic [paddr_width_p-1:0] app_addr_lo;
-  logic [cce_block_width_p-1:0] app_wdf_data_lo, app_rd_data_li;
-  logic [(cce_block_width_p>>3)-1:0] app_wdf_mask_lo;
+  logic [dword_width_p-1:0] app_wdf_data_lo, app_rd_data_li;
+  logic [(dword_width_p>>3)-1:0] app_wdf_mask_lo;
   app_cmd_e app_cmd_lo;
 
   // DMC
@@ -179,27 +187,33 @@ module bp_ddr
       reset_done <= 1'b1;
   end
 
-  assign mem_cmd_ready_o = mem_cmd_ready_lo & reset_done;
-  assign mem_resp_v_o = mem_resp_v_lo & reset_done;
+  assign mem_cmd_header_ready_o = mem_cmd_header_ready_lo & reset_done;
+  assign mem_cmd_data_ready_o   = mem_cmd_data_ready_lo & reset_done;
+  assign mem_resp_header_v_o    = mem_resp_header_v_lo & reset_done;
+  assign mem_resp_data_v_o      = mem_resp_data_v_lo & reset_done;
 
-  bp_me_cce_to_xui
+  bp_burst_to_xui
     #(.bp_params_p(bp_params_p)
-      ,.flit_width_p(mem_noc_flit_width_p)
-      ,.cord_width_p(mem_noc_cord_width_p)
-      ,.cid_width_p(mem_noc_cid_width_p)
-      ,.len_width_p(mem_noc_len_width_p)
      )
     dram_link
      (.clk_i(clk_i)
       ,.reset_i(ui_reset_lo)
 
-      ,.mem_cmd_i(mem_cmd_i)
-      ,.mem_cmd_v_i(mem_cmd_v_i)
-      ,.mem_cmd_ready_o(mem_cmd_ready_lo)
+      ,.mem_cmd_header_i(mem_cmd_header_i)
+      ,.mem_cmd_header_v_i(mem_cmd_header_v_i)
+      ,.mem_cmd_header_ready_o(mem_cmd_header_ready_lo)
 
-      ,.mem_resp_o(mem_resp_o)
-      ,.mem_resp_v_o(mem_resp_v_lo)
-      ,.mem_resp_yumi_i(mem_resp_yumi_i)
+      ,.mem_cmd_data_i(mem_cmd_data_i)
+      ,.mem_cmd_data_v_i(mem_cmd_data_v_i)
+      ,.mem_cmd_data_ready_o(mem_cmd_data_ready_lo)
+
+      ,.mem_resp_header_o(mem_resp_header_o)
+      ,.mem_resp_header_v_o(mem_resp_header_v_lo)
+      ,.mem_resp_header_yumi_i(mem_resp_header_yumi_i)
+
+      ,.mem_resp_data_o(mem_resp_data_o)
+      ,.mem_resp_data_v_o(mem_resp_data_v_lo)
+      ,.mem_resp_data_yumi_i(mem_resp_data_yumi_i)
 
       ,.app_addr_o(app_addr_lo)
       ,.app_cmd_o(app_cmd_lo)
@@ -219,7 +233,7 @@ module bp_ddr
   bsg_dmc
     #(.num_adgs_p ()
       ,.ui_addr_width_p(dmc_addr_width_lp)
-      ,.ui_data_width_p(cce_block_width_p)
+      ,.ui_data_width_p(dword_width_p)
       ,.burst_data_width_p(cce_block_width_p)
       ,.dq_data_width_p(dmc_data_width_lp)
       ,.cmd_afifo_depth_p(dmc_cmd_afifo_depth_lp)

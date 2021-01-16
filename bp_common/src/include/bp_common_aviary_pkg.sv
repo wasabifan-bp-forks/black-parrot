@@ -61,7 +61,7 @@ package bp_common_aviary_pkg;
       ,cce_ucode            : 0
       ,cce_pc_width         : 8
 
-      ,l2_en   : 1
+      ,l2_en   : 0
       ,l2_sets : 128
       ,l2_assoc: 8
       ,l2_outstanding_reqs: 8

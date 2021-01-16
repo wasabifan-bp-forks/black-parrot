@@ -66,11 +66,22 @@ module testbench
 
   `declare_bp_bedrock_mem_if(paddr_width_p, cce_block_width_p, lce_id_width_p, lce_assoc_p, cce);
 
+  bp_bedrock_cce_mem_msg_header_s proc_mem_cmd_header_lo;
+  logic proc_mem_cmd_header_v_lo, proc_mem_cmd_header_ready_li;
+  logic [dword_width_p-1:0] proc_mem_cmd_data_lo;
+  logic proc_mem_cmd_data_v_lo, proc_mem_cmd_data_ready_li;
+
+  bp_bedrock_cce_mem_msg_header_s proc_mem_resp_header_li;
+  logic proc_mem_resp_header_v_li, proc_mem_resp_header_yumi_lo;
+  logic [dword_width_p-1:0] proc_mem_resp_data_li;
+  logic proc_mem_resp_data_v_li, proc_mem_resp_data_yumi_lo;
+
+/*
   bp_bedrock_cce_mem_msg_s proc_mem_cmd_lo;
   logic proc_mem_cmd_v_lo, proc_mem_cmd_ready_li;
   bp_bedrock_cce_mem_msg_s proc_mem_resp_li;
   logic proc_mem_resp_v_li, proc_mem_resp_yumi_lo;
-
+*/
   bp_bedrock_cce_mem_msg_s proc_io_cmd_lo;
   logic proc_io_cmd_v_lo, proc_io_cmd_ready_li;
   bp_bedrock_cce_mem_msg_s proc_io_resp_li;
@@ -109,6 +120,21 @@ module testbench
      ,.io_resp_v_o(load_resp_v_li)
      ,.io_resp_ready_i(load_resp_ready_lo)
 
+     ,.mem_cmd_header_o(proc_mem_cmd_header_lo)
+     ,.mem_cmd_header_v_o(proc_mem_cmd_header_v_lo)
+     ,.mem_cmd_header_ready_i(proc_mem_cmd_header_ready_li)
+     ,.mem_cmd_data_o(proc_mem_cmd_data_lo)
+     ,.mem_cmd_data_v_o(proc_mem_cmd_data_v_lo)
+     ,.mem_cmd_data_ready_i(proc_mem_cmd_data_ready_li)
+
+     ,.mem_resp_header_i(proc_mem_resp_header_li)
+     ,.mem_resp_header_v_i(proc_mem_resp_header_v_li)
+     ,.mem_resp_header_yumi_o(proc_mem_resp_header_yumi_lo)
+     ,.mem_resp_data_i(proc_mem_resp_data_li)
+     ,.mem_resp_data_v_i(proc_mem_resp_data_v_li)
+     ,.mem_resp_data_yumi_o(proc_mem_resp_data_yumi_lo)
+
+/*
      ,.mem_cmd_o(proc_mem_cmd_lo)
      ,.mem_cmd_v_o(proc_mem_cmd_v_lo)
      ,.mem_cmd_ready_i(proc_mem_cmd_ready_li)
@@ -116,6 +142,7 @@ module testbench
      ,.mem_resp_i(proc_mem_resp_li)
      ,.mem_resp_v_i(proc_mem_resp_v_li)
      ,.mem_resp_yumi_o(proc_mem_resp_yumi_lo)
+*/
      );
 
   bp_mem
@@ -132,6 +159,21 @@ module testbench
     (.clk_i(clk_i)
      ,.reset_i(reset_i)
 
+     ,.mem_cmd_header_i(proc_mem_cmd_header_lo)
+     ,.mem_cmd_header_v_i(proc_mem_cmd_header_v_lo)
+     ,.mem_cmd_header_ready_o(proc_mem_cmd_header_ready_li)
+     ,.mem_cmd_data_i(proc_mem_cmd_data_lo)
+     ,.mem_cmd_data_v_i(proc_mem_cmd_data_v_lo)
+     ,.mem_cmd_data_ready_o(proc_mem_cmd_data_ready_li)
+
+     ,.mem_resp_header_o(proc_mem_resp_header_li)
+     ,.mem_resp_header_v_o(proc_mem_resp_header_v_li)
+     ,.mem_resp_header_yumi_i(proc_mem_resp_header_yumi_lo)
+     ,.mem_resp_data_o(proc_mem_resp_data_li)
+     ,.mem_resp_data_v_o(proc_mem_resp_data_v_li)
+     ,.mem_resp_data_yumi_i(proc_mem_resp_data_yumi_lo)
+
+/*
      ,.mem_cmd_i(proc_mem_cmd_lo)
      ,.mem_cmd_v_i(proc_mem_cmd_ready_li & proc_mem_cmd_v_lo)
      ,.mem_cmd_ready_o(proc_mem_cmd_ready_li)
@@ -139,7 +181,7 @@ module testbench
      ,.mem_resp_o(proc_mem_resp_li)
      ,.mem_resp_v_o(proc_mem_resp_v_li)
      ,.mem_resp_yumi_i(proc_mem_resp_yumi_lo)
-
+*/
      ,.dram_clk_i(dram_clk_i)
      ,.dram_reset_i(dram_reset_i)
      );
@@ -472,13 +514,21 @@ module testbench
     (.clk_i(clk_i & testbench.dram_trace_en_lo)
      ,.reset_i(reset_i)
 
-     ,.mem_cmd_i(proc_mem_cmd_lo)
-     ,.mem_cmd_v_i(proc_mem_cmd_v_lo & proc_mem_cmd_ready_li)
-     ,.mem_cmd_ready_i(proc_mem_cmd_ready_li)
+     ,.mem_cmd_header_i(proc_mem_cmd_header_lo)
+     ,.mem_cmd_header_v_i(proc_mem_cmd_header_v_lo)
+     ,.mem_cmd_header_ready_i(proc_mem_cmd_header_ready_li)
 
-     ,.mem_resp_i(proc_mem_resp_li)
-     ,.mem_resp_v_i(proc_mem_resp_v_li)
-     ,.mem_resp_yumi_i(proc_mem_resp_yumi_lo)
+     ,.mem_cmd_data_i(proc_mem_cmd_data_lo)
+     ,.mem_cmd_data_v_i(proc_mem_cmd_data_v_lo)
+     ,.mem_cmd_data_ready_i(proc_mem_cmd_data_ready_li)
+
+     ,.mem_resp_header_i(proc_mem_resp_header_li)
+     ,.mem_resp_header_v_i(proc_mem_resp_header_v_li)
+     ,.mem_resp_header_yumi_i(proc_mem_resp_header_yumi_lo)
+
+     ,.mem_resp_data_i(proc_mem_resp_data_li)
+     ,.mem_resp_data_v_i(proc_mem_resp_data_v_li)
+     ,.mem_resp_data_yumi_i(proc_mem_resp_data_yumi_lo)
      );
 
   bind bp_be_top

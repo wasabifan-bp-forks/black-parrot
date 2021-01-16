@@ -24,8 +24,9 @@ $BASEJUMP_STL_DIR/bsg_async/bsg_sync_sync.v
 # me files
 $BP_ME_DIR/test/common/bp_dramsim3_pkg.sv
 $BP_ME_DIR/test/common/bp_mem.sv
-$BP_ME_DIR/test/common/bp_mem_to_dram.sv
-$BP_ME_DIR/test/common/bp_me_cce_to_xui.sv
+$BP_ME_DIR/test/common/bp_burst_to_dram.sv
+$BP_ME_DIR/test/common/bp_burst_to_xui.sv
+$BP_ME_DIR/test/common/bp_parallel_serial_converter.sv
 $BP_ME_DIR/test/common/bp_me_nonsynth_cce_tracer.sv
 $BP_ME_DIR/test/common/bp_me_nonsynth_pkg.sv
 $BP_ME_DIR/test/common/bp_me_nonsynth_lce_tracer.sv

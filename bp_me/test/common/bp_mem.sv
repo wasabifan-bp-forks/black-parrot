@@ -24,40 +24,59 @@ module bp_mem
    , parameter use_dramsim3_p       = 0
    , parameter dram_fixed_latency_p = 0
    )
-  (input                                 clk_i
-   , input                               reset_i
+  (input                                            clk_i
+   , input                                          reset_i
+
+   , input                                          dram_clk_i
+   , input                                          dram_reset_i
 
    // BP side
    // ready->valid (ready then valid)
-   , input [cce_mem_msg_width_lp-1:0]    mem_cmd_i
-   , input                               mem_cmd_v_i
-   , output                              mem_cmd_ready_o
+   , input [cce_mem_msg_header_width_lp-1:0]        mem_cmd_header_i
+   , input                                          mem_cmd_header_v_i
+   , output logic                                   mem_cmd_header_ready_o
 
-   , output [cce_mem_msg_width_lp-1:0]   mem_resp_o
-   , output                              mem_resp_v_o
-   , input                               mem_resp_yumi_i
+   , input [dword_width_p-1:0]                      mem_cmd_data_i
+   , input                                          mem_cmd_data_v_i
+   , output logic                                   mem_cmd_data_ready_o
 
-   , input                               dram_clk_i
-   , input                               dram_reset_i
+   , output logic [cce_mem_msg_header_width_lp-1:0] mem_resp_header_o
+   , output logic                                   mem_resp_header_v_o
+   , input                                          mem_resp_header_yumi_i
+
+   , output logic [dword_width_p-1:0]               mem_resp_data_o
+   , output logic                                   mem_resp_data_v_o
+   , input                                          mem_resp_data_yumi_i
    );
 
 if(use_ddr_p) begin: ddr
+
   bp_ddr
-    #(.bp_params_p(bp_params_p)
-     ,.mem_offset_p(mem_offset_p)
-     )
+   #(.bp_params_p(bp_params_p)
+    ,.mem_offset_p(mem_offset_p)
+    )
     ddr
-     (.clk_i(clk_i)
-     ,.reset_i(reset_i)
+    (.clk_i(clk_i)
+    ,.reset_i(reset_i)
 
-     ,.mem_cmd_i(mem_cmd_i)
-     ,.mem_cmd_v_i(mem_cmd_v_i)
-     ,.mem_cmd_ready_o(mem_cmd_ready_o)
+    ,.mem_cmd_header_i(mem_cmd_header_i)
+    ,.mem_cmd_header_v_i(mem_cmd_header_v_i)
+    ,.mem_cmd_header_ready_o(mem_cmd_header_ready_o)
 
-     ,.mem_resp_o(mem_resp_o)
-     ,.mem_resp_v_o(mem_resp_v_o)
-     ,.mem_resp_yumi_i(mem_resp_yumi_i)
-     );
+    ,.mem_cmd_data_i(mem_cmd_data_i)
+    ,.mem_cmd_data_v_i(mem_cmd_data_v_i)
+    ,.mem_cmd_data_ready_o(mem_cmd_data_ready_o)
+
+    ,.mem_resp_header_o(mem_resp_header_o)
+    ,.mem_resp_header_v_o(mem_resp_header_v_o)
+    ,.mem_resp_header_yumi_i(mem_resp_header_yumi_i)
+
+    ,.mem_resp_data_o(mem_resp_data_o)
+    ,.mem_resp_data_v_o(mem_resp_data_v_o)
+    ,.mem_resp_data_yumi_i(mem_resp_data_yumi_i)
+    );
+
+  if (mem_load_p) $fatal("Preloading is not current supported in DDR model");
 end
 else if(use_dramsim3_p) begin: dramsim3
 
@@ -74,24 +93,33 @@ else if(use_dramsim3_p) begin: dramsim3
     assign dram_data_v_li[i] = '0;
   end
 
-  bp_mem_to_dram
+  bp_burst_to_dram
     #(.bp_params_p(bp_params_p)
       ,.channel_addr_width_p(`dram_pkg::channel_addr_width_p)
       ,.data_width_p(`dram_pkg::data_width_p)
       ,.dram_base_p(mem_offset_p)
-      ,.fifo_els_p(1)
+      ,.cmd_fifo_els_p(16)
+      ,.async_fifo_els_p(16)
      )
     mem2dram
      (.clk_i(clk_i)
       ,.reset_i(reset_i)
 
-      ,.mem_cmd_i(mem_cmd_i)
-      ,.mem_cmd_v_i(mem_cmd_v_i)
-      ,.mem_cmd_ready_o(mem_cmd_ready_o)
+      ,.mem_cmd_header_i(mem_cmd_header_i)
+      ,.mem_cmd_header_v_i(mem_cmd_header_v_i)
+      ,.mem_cmd_header_ready_o(mem_cmd_header_ready_o)
 
-      ,.mem_resp_o(mem_resp_o)
-      ,.mem_resp_v_o(mem_resp_v_o)
-      ,.mem_resp_yumi_i(mem_resp_yumi_i)
+      ,.mem_cmd_data_i(mem_cmd_data_i)
+      ,.mem_cmd_data_v_i(mem_cmd_data_v_i)
+      ,.mem_cmd_data_ready_o(mem_cmd_data_ready_o)
+
+      ,.mem_resp_header_o(mem_resp_header_o)
+      ,.mem_resp_header_v_o(mem_resp_header_v_o)
+      ,.mem_resp_header_yumi_i(mem_resp_header_yumi_i)
+
+      ,.mem_resp_data_o(mem_resp_data_o)
+      ,.mem_resp_data_v_o(mem_resp_data_v_o)
+      ,.mem_resp_data_yumi_i(mem_resp_data_yumi_i)
 
       ,.dram_clk_i(dram_clk_i)
       ,.dram_reset_i(dram_reset_i)
@@ -166,78 +194,67 @@ else if(use_dramsim3_p) begin: dramsim3
          $fatal("Preloading with Verilator is not current supported, due to the dot references");
       `endif
     end
+
 end
 else begin: fixed_latency
 
-  localparam latency_width_lp = `BSG_SAFE_CLOG2(dram_fixed_latency_p+1);
-
-  logic [latency_width_lp-1:0] latency_cnt_r;
-  logic waiting_for_data;
-
-  logic dram_v_lo, dram_write_not_read_lo, dram_data_v_lo, dram_data_v_li;
+  logic dram_v_lo, dram_write_not_read_lo, dram_data_v_lo, dram_data_v_li, mem_data_v_lo;
   logic dram_yumi_li, dram_data_yumi_li, dram_data_ready_lo;
-  logic [paddr_width_p-1:0] dram_ch_addr_lo, dram_ch_addr_li;
-  logic [cce_block_width_p-1:0] dram_data_lo, dram_data_li;
-  logic [(cce_block_width_p >> 3)-1:0] dram_mask_lo;
+  logic [paddr_width_p-1:0] dram_ch_addr_lo, dram_ch_addr_li, mem_ch_addr_lo;
+  logic [dword_width_p-1:0] dram_data_lo, dram_data_li, mem_data_lo;
+  logic [(dword_width_p >> 3)-1:0] dram_mask_lo;
 
-  assign dram_yumi_li = dram_v_lo & ~waiting_for_data;
-  assign dram_data_yumi_li = dram_data_v_lo & ~waiting_for_data;
-  assign dram_data_v_li = waiting_for_data & (latency_cnt_r == dram_fixed_latency_p-1);
+  assign dram_yumi_li = dram_v_lo;
+  assign dram_data_yumi_li = dram_data_v_lo;
 
-  wire read_cmd  = dram_yumi_li & ~dram_write_not_read_lo;
+  bsg_shift_reg
+    #(.width_p (paddr_width_p+dword_width_p)
+     ,.stages_p(dram_fixed_latency_p)
+    ) delay_shift_reg
+    (.clk    (clk_i)
+    ,.reset_i(reset_i)
+    ,.valid_i(mem_data_v_lo)
+    ,.data_i ({mem_ch_addr_lo, mem_data_lo})
+    ,.valid_o(dram_data_v_li)
+    ,.data_o ({dram_ch_addr_li, dram_data_li})
+    );
 
-  bsg_dff_reset_en
-    #(.width_p(paddr_width_p))
+  bsg_dff_reset
+    #(.width_p(1+paddr_width_p))
     addr_reg
      (.clk_i(clk_i)
       ,.reset_i(reset_i)
-      ,.en_i(read_cmd)
-      ,.data_i(dram_ch_addr_lo)
-      ,.data_o(dram_ch_addr_li)
+      ,.data_i({dram_v_lo, dram_ch_addr_lo})
+      ,.data_o({mem_data_v_lo, mem_ch_addr_lo})
      );
 
-  bsg_dff_reset_set_clear
-    #(.width_p(1))
-    wait_reg
-     (.clk_i(clk_i)
-      ,.reset_i(reset_i)
-      ,.set_i(read_cmd)
-      ,.clear_i(dram_data_v_li)
-      ,.data_o(waiting_for_data)
-     );
-
-  bsg_counter_clear_up
-    #(.max_val_p(dram_fixed_latency_p)
-      ,.init_val_p(0)
-     )
-    latency_counter
-     (.clk_i(clk_i)
-      ,.reset_i(reset_i)
-
-      ,.clear_i(read_cmd)
-      ,.up_i(waiting_for_data)
-
-      ,.count_o(latency_cnt_r)
-     );
-
-  bp_mem_to_dram
+  bp_burst_to_dram
     #(.bp_params_p(bp_params_p)
       ,.channel_addr_width_p(paddr_width_p)
-      ,.data_width_p(cce_block_width_p)
+      ,.data_width_p(dword_width_p)
       ,.dram_base_p(mem_offset_p)
-      ,.fifo_els_p(16)
+      ,.cmd_fifo_els_p(16)
+      ,.bypass_async_fifos_p(1)
      )
     mem2dram
      (.clk_i(clk_i)
       ,.reset_i(reset_i)
 
-      ,.mem_cmd_i(mem_cmd_i)
-      ,.mem_cmd_v_i(mem_cmd_v_i)
-      ,.mem_cmd_ready_o(mem_cmd_ready_o)
+      ,.mem_cmd_header_i(mem_cmd_header_i)
+      ,.mem_cmd_header_v_i(mem_cmd_header_v_i)
+      ,.mem_cmd_header_ready_o(mem_cmd_header_ready_o)
 
-      ,.mem_resp_o(mem_resp_o)
-      ,.mem_resp_v_o(mem_resp_v_o)
-      ,.mem_resp_yumi_i(mem_resp_yumi_i)
+      ,.mem_cmd_data_i(mem_cmd_data_i)
+      ,.mem_cmd_data_v_i(mem_cmd_data_v_i)
+      ,.mem_cmd_data_ready_o(mem_cmd_data_ready_o)
+
+      ,.mem_resp_header_o(mem_resp_header_o)
+      ,.mem_resp_header_v_o(mem_resp_header_v_o)
+      ,.mem_resp_header_yumi_i(mem_resp_header_yumi_i)
+
+      ,.mem_resp_data_o(mem_resp_data_o)
+      ,.mem_resp_data_v_o(mem_resp_data_v_o)
+      ,.mem_resp_data_yumi_i(mem_resp_data_yumi_i)
 
       ,.dram_clk_i(clk_i)
       ,.dram_reset_i(reset_i)
@@ -258,11 +275,11 @@ else begin: fixed_latency
       ,.dram_data_ready_o(dram_data_ready_lo)
    );
 
-  localparam mem_els_lp = mem_cap_in_bytes_p / (cce_block_width_p/8);
+  localparam mem_els_lp = mem_cap_in_bytes_p / (dword_width_p/8);
   localparam lg_mem_els_lp = `BSG_SAFE_CLOG2(mem_els_lp);
-  localparam block_offset_width_lp = `BSG_SAFE_CLOG2(cce_block_width_p/8);
+  localparam block_offset_width_lp = `BSG_SAFE_CLOG2(dword_width_p/8);
   bsg_nonsynth_mem_1rw_sync_mask_write_byte_dma
-   #(.width_p(cce_block_width_p)
+   #(.width_p(dword_width_p)
      ,.els_p(mem_els_lp)
      ,.id_p(0)
      ,.init_mem_p(1)
@@ -278,7 +295,7 @@ else begin: fixed_latency
      ,.data_i(dram_data_lo)
      ,.w_mask_i(dram_mask_lo)
 
-     ,.data_o(dram_data_li)
+     ,.data_o(mem_data_lo)
      );
 
   if (mem_load_p)

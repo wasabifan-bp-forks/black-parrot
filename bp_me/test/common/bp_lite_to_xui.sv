@@ -1,10 +1,7 @@
-/**
- * bp_me_cce_to_wormhole_link_master.v
- */
  
 `include "bp_mem_wormhole.svh"
 
-module bp_me_cce_to_xui
+module bp_lite_to_xui
  import bp_common_pkg::*;
  import bp_common_aviary_pkg::*;
  import bp_me_pkg::*;
