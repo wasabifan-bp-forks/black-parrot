@@ -17,6 +17,9 @@ package bp_me_pkg;
   localparam mem_cmd_payload_mask_gp  = (1 << e_bedrock_mem_uc_wr) | (1 << e_bedrock_mem_wr);
   localparam mem_resp_payload_mask_gp = (1 << e_bedrock_mem_uc_rd) | (1 << e_bedrock_mem_rd);
 
+  localparam mem_stream_wr_mask_gp = (1 << e_bedrock_mem_uc_wr) | (1 << e_bedrock_mem_wr);
+  localparam mem_stream_rd_mask_gp = (1 << e_bedrock_mem_uc_rd) | (1 << e_bedrock_mem_rd);
+
   // Miss Status Handling Register Struct
   // This struct tracks the information required to process an LCE request
   `define declare_bp_cce_mshr_s(lce_id_width_mp, lce_assoc_mp, paddr_width_mp) \
