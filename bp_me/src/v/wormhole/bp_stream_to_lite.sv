@@ -45,7 +45,7 @@ module bp_stream_to_lite
   localparam stream_offset_width_lp = `BSG_SAFE_CLOG2(out_data_bytes_lp);
 
   bp_bedrock_in_msg_header_s header_lo;
-  bsg_one_fifo
+  bsg_two_fifo
    #(.width_p($bits(bp_bedrock_in_msg_header_s)))
    header_fifo
     (.clk_i(clk_i)
