@@ -1,6 +1,6 @@
 /**
  *  Name:
- *    bp_be_dcache.v
+ *    bp_be_dcache.sv
  *
  *  Description:
  *    L1 Data Cache. Features:
@@ -122,10 +122,11 @@ module bp_be_dcache
    , input                            ptag_v_i
    , input                            uncached_i
 
+   , output logic                      miss_v_o
    , output logic [dpath_width_gp-1:0] early_data_o
-   , output logic                     early_v_o
+   , output logic                      early_v_o
    , output logic [dpath_width_gp-1:0] final_data_o
-   , output logic                     final_v_o
+   , output logic                      final_v_o
 
    // ctrl
    , input                            flush_i
@@ -300,6 +301,7 @@ module bp_be_dcache
 
   // TV stage
   //
+  localparam snoop_offset_width_p = `BSG_SAFE_CLOG2(dcache_fill_width_p/dword_width_p);
   logic v_tv_r;
   logic tv_we;
   logic uncached_tv_r;
@@ -321,6 +323,27 @@ module bp_be_dcache
   // fencei does not require a ptag
   assign tv_we = v_tl_r & (ptag_v_i | decode_tl_r.fencei_op);
 
+  // Snoop logic
+  logic [dword_width_p-1:0] snoop_word;
+  wire [snoop_offset_width_p-1:0] snoop_word_offset = paddr_tl[3+:snoop_offset_width_p];
+  bsg_mux
+   #(.width_p(dword_width_p), .els_p(dcache_fill_width_p/dword_width_p))
+   snoop_mux
+    (.data_i(data_mem_pkt.data)
+     ,.sel_i(snoop_word_offset)
+     ,.data_o(snoop_word)
+     );
+  wire [dcache_block_width_p-1:0] snoop_data_lo = {dcache_block_width_p/dword_width_p{snoop_word}};
+
+  logic [dcache_assoc_p-1:0][bank_width_lp-1:0] ld_data_tv_n;
+  bsg_mux
+   #(.width_p(dcache_block_width_p), .els_p(2))
+   ld_data_mux
+    (.data_i({snoop_data_lo, data_mem_data_lo})
+     ,.sel_i(cache_req_critical_i)
+     ,.data_o(ld_data_tv_n)
+     );
+
   always_ff @(negedge clk_i) begin
     if (reset_i) begin
       v_tv_r <= 1'b0;
@@ -337,26 +360,26 @@ module bp_be_dcache
       // We poison the valid of the stage rather than tl_we, to relieve critical paths on the
       //   large memory enables. The tradeoff is an additional toggle whenever there is a flush
       //   during an incoming dcache request
-      v_tv_r <= tv_we & ~flush_i;
+      v_tv_r <= (tv_we & ~flush_i) | cache_req_critical_i;
 
       if (tv_we) begin
         decode_tv_r <= decode_tl_r;
         paddr_tv_r <= paddr_tl;
         tag_info_tv_r <= tag_mem_data_lo;
         uncached_tv_r <= uncached_i | decode_tl_r.l2_op;
-        load_hit_tv_r <= load_hit_tl;
-        store_hit_tv_r <= store_hit_tl;
         addr_tag_tv_r <= addr_tag_tl;
         invalid_tv_r <= invalid_tl;
         addr_bank_offset_dec_tv_r <= addr_bank_offset_dec_tl;
       end
 
-      if (tv_we & decode_tl_r.load_op) begin
-        ld_data_tv_r <= data_mem_data_lo;
-      end
-
       if (tv_we & decode_tl_r.store_op) begin
         data_tv_r <= data_tl_r;
+      end
+
+      if (tv_we | cache_req_critical_i) begin
+        load_hit_tv_r <= load_hit_tl | cache_req_critical_i;
+        store_hit_tv_r <= store_hit_tl | cache_req_critical_i;
+        ld_data_tv_r <= ld_data_tv_n;
       end
     end
   end
@@ -370,18 +393,18 @@ module bp_be_dcache
   logic fencei_req;
 
   // For L2 atomics
+  wire l2_amo_req  = v_tv_r & decode_tv_r.l2_op;
   wire lr_req      = v_tv_r & decode_tv_r.lr_op;
   wire sc_req      = v_tv_r & decode_tv_r.sc_op;
-  wire amoswap_req = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoswap);
-  wire amoadd_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoadd);
-  wire amoxor_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoxor);
-  wire amoand_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoand);
-  wire amoor_req   = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoor);
-  wire amomin_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amomin);
-  wire amomax_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amomax);
-  wire amominu_req = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amominu);
-  wire amomaxu_req = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amomaxu);
-  wire l2_amo_req  = v_tv_r & decode_tv_r.l2_op;
+  wire amoswap_req = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amoswap);
+  wire amoadd_req  = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amoadd);
+  wire amoxor_req  = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amoxor);
+  wire amoand_req  = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amoand);
+  wire amoor_req   = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amoor);
+  wire amomin_req  = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amomin);
+  wire amomax_req  = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amomax);
+  wire amominu_req = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amominu);
+  wire amomaxu_req = v_tv_r & decode_tv_r.amo_op & (decode_tv_r.amo_subop == e_dcache_subop_amomaxu);
 
   // load reserved / store conditional
   logic lr_hit_tv;
@@ -741,11 +764,8 @@ module bp_be_dcache
 
   assign ready_o = ~cache_req_busy_i & is_ready;
 
-  assign early_v_o = v_tv_r & ((uncached_tv_r & (decode_tv_r.store_op & cache_req_yumi_i))
-                              | (~uncached_tv_r & ~decode_tv_r.l2_op & ~decode_tv_r.fencei_op & ~miss_tv)
-                              // Always send fencei when coherent
-                              | (fencei_req & (~gdirty_r | (l1_coherent_p == 1)))
-                              );
+  assign miss_v_o = v_tv_r & cache_req_yumi_i & ~uncached_store_req & ~wt_req;
+  assign early_v_o = v_tv_r & ~miss_v_o & ~cache_req_v_o;
 
   // Maintain a global dirty bit for the cache. When data is written to the write buffer, we set
   //   it. When we send a flush request to the CE, we clear it.
@@ -875,44 +895,22 @@ module bp_be_dcache
 
   // DM stage
   //
-  localparam snoop_offset_width_p = `BSG_SAFE_CLOG2(dcache_fill_width_p/dword_width_p);
-
   logic dm_we;
   logic v_dm_r;
   logic [dword_width_gp-1:0] data_dm_r;
   logic [3:0] byte_offset_dm_r;
-  logic [snoop_offset_width_p-1:0] snoop_offset_dm_r;
   logic double_op_dm_r, word_op_dm_r, half_op_dm_r, byte_op_dm_r;
   logic signed_op_dm_r, float_op_dm_r;
-
-  logic [dword_width_p-1:0] snoop_word;
-  wire [snoop_offset_width_p-1:0] snoop_word_offset = snoop_offset_dm_r;
-  bsg_mux
-   #(.width_p(dword_width_p), .els_p(dcache_fill_width_p/dword_width_p))
-   snoop_mux
-    (.data_i(data_mem_pkt.data)
-     ,.sel_i(snoop_word_offset)
-     ,.data_o(snoop_word)
-     );
-
-  logic [dword_width_p-1:0] data_dm_n;
-  bsg_mux
-   #(.width_p(dword_width_p), .els_p(2))
-   ld_data_mux
-    (.data_i({snoop_word, early_data})
-     ,.sel_i(cache_req_critical_i)
-     ,.data_o(data_dm_n)
-     );
 
   assign dm_we = v_tv_r;
   always_ff @(posedge clk_i) begin
     if (reset_i) begin
       v_dm_r <= '0;
     end else begin
-      v_dm_r <= (dm_we & early_v_o & ~flush_i) | cache_req_critical_i;
+      v_dm_r <= dm_we & early_v_o & ~flush_i;
 
       if (dm_we) begin
-        data_dm_r          <= data_dm_n;
+        data_dm_r          <= early_data_o;
         byte_offset_dm_r   <= paddr_tv_r[0+:4];
         signed_op_dm_r     <= decode_tv_r.signed_op;
         float_op_dm_r      <= decode_tv_r.float_op;
@@ -920,11 +918,6 @@ module bp_be_dcache
         word_op_dm_r       <= decode_tv_r.word_op;
         half_op_dm_r       <= decode_tv_r.half_op;
         byte_op_dm_r       <= decode_tv_r.byte_op;
-        snoop_offset_dm_r  <= paddr_tv_r[3+:snoop_offset_width_p];
-      end
-
-      if (cache_req_critical_i) begin
-        data_dm_r          <= data_dm_n;
       end
     end
   end

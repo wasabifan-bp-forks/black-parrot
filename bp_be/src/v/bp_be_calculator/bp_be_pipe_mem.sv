@@ -47,6 +47,7 @@ module bp_be_pipe_mem
 
    , output logic                         tlb_miss_v_o
    , output logic                         cache_miss_v_o
+   , output logic                         cache_fail_v_o
    , output logic                         fencei_v_o
    , output logic                         load_misaligned_v_o
    , output logic                         load_access_fault_v_o
@@ -146,7 +147,7 @@ module bp_be_pipe_mem
   bp_be_dcache_pkt_s        dcache_pkt;
   logic [dpath_width_gp-1:0] dcache_early_data, dcache_final_data;
   logic [ptag_width_p-1:0]  dcache_ptag;
-  logic                     dcache_early_v, dcache_final_v, dcache_pkt_v;
+  logic                     dcache_miss_v, dcache_early_v, dcache_final_v, dcache_pkt_v;
   logic                     dcache_ptag_v;
   logic                     dcache_uncached;
   logic                     dcache_ready_lo;
@@ -251,6 +252,7 @@ module bp_be_pipe_mem
       ,.ptag_v_i(dcache_ptag_v)
       ,.uncached_i(dcache_uncached)
 
+      ,.miss_v_o(dcache_miss_v)
       ,.early_v_o(dcache_early_v)
       ,.early_data_o(dcache_early_data)
       ,.final_data_o(dcache_final_data)
@@ -318,7 +320,8 @@ module bp_be_pipe_mem
   end
 
   assign tlb_miss_v_o           = ~flush_i & dtlb_miss_v;
-  assign cache_miss_v_o         = ~flush_i & is_req_mem2 & ~dcache_early_v;
+  assign cache_miss_v_o         = ~flush_i & is_req_mem2 & dcache_miss_v;
+  assign cache_fail_v_o         = ~flush_i & is_req_mem2 & ~dcache_early_v & dcache_miss_v;
   assign fencei_v_o             = ~flush_i & is_fencei_mem2 & dcache_early_v;
   assign store_page_fault_v_o   = ~flush_i & store_page_fault_v;
   assign load_page_fault_v_o    = ~flush_i & load_page_fault_v;

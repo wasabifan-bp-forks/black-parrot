@@ -256,6 +256,7 @@
     logic icache_miss;
     logic dtlb_miss;
     logic dcache_miss;
+    logic dcache_fail;
     logic fencei_v;
   }  bp_be_exception_s;
 

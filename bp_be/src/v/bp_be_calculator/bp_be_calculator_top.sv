@@ -114,7 +114,7 @@ module bp_be_calculator_top
   assign ptw_fill_pkt_o = ptw_fill_pkt;
 
   logic pipe_mem_dtlb_miss_lo;
-  logic pipe_mem_dcache_miss_lo;
+  logic pipe_mem_dcache_miss_lo, pipe_mem_dcache_fail_lo;
   logic pipe_mem_fencei_lo;
   logic pipe_mem_load_misaligned_lo;
   logic pipe_mem_load_access_fault_lo;
@@ -289,6 +289,7 @@ module bp_be_calculator_top
 
      ,.tlb_miss_v_o(pipe_mem_dtlb_miss_lo)
      ,.cache_miss_v_o(pipe_mem_dcache_miss_lo)
+     ,.cache_fail_v_o(pipe_mem_dcache_fail_lo)
      ,.fencei_v_o(pipe_mem_fencei_lo)
      ,.load_misaligned_v_o(pipe_mem_load_misaligned_lo)
      ,.load_access_fault_v_o(pipe_mem_load_access_fault_lo)
@@ -485,6 +486,7 @@ module bp_be_calculator_top
           exc_stage_n[1].exc.store_page_fault   |= pipe_mem_store_page_fault_lo;
 
           exc_stage_n[2].exc.dcache_miss        |= pipe_mem_dcache_miss_lo;
+          exc_stage_n[2].exc.dcache_fail        |= pipe_mem_dcache_fail_lo;
           exc_stage_n[2].exc.fencei_v           |= pipe_mem_fencei_lo;
     end
 

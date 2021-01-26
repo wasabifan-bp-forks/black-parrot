@@ -41,6 +41,7 @@ module bp_be_dcache_decoder
 
     // Atomic subop decoding
     unique casez (dcache_pkt.opcode)
+      e_dcache_op_amoswapw, e_dcache_op_amoswapd: decode_cast_o.amo_subop = e_dcache_subop_amoswap;
       e_dcache_op_amoaddw, e_dcache_op_amoaddd  : decode_cast_o.amo_subop = e_dcache_subop_amoadd;
       e_dcache_op_amoxorw, e_dcache_op_amoxord  : decode_cast_o.amo_subop = e_dcache_subop_amoxor;
       e_dcache_op_amoandw, e_dcache_op_amoandd  : decode_cast_o.amo_subop = e_dcache_subop_amoand;
@@ -49,15 +50,10 @@ module bp_be_dcache_decoder
       e_dcache_op_amomaxw, e_dcache_op_amomaxd  : decode_cast_o.amo_subop = e_dcache_subop_amomax;
       e_dcache_op_amominuw, e_dcache_op_amominud: decode_cast_o.amo_subop = e_dcache_subop_amominu;
       e_dcache_op_amomaxuw, e_dcache_op_amomaxud: decode_cast_o.amo_subop = e_dcache_subop_amomaxu;
-      //e_dcache_op_amoswapw, e_dcache_op_amoswapd
-      default                                   : decode_cast_o.amo_subop = e_dcache_subop_amoswap;
+      default                                   : decode_cast_o.amo_subop = e_dcache_subop_none;
     endcase
 
-    decode_cast_o.amo_op = decode_cast_o.amo_subop inside
-      {e_dcache_subop_amoadd, e_dcache_subop_amoxor,  e_dcache_subop_amoand, e_dcache_subop_amoor
-       ,e_dcache_subop_amomin, e_dcache_subop_amomax,  e_dcache_subop_amominu, e_dcache_subop_amomaxu
-       ,e_dcache_subop_amoswap
-       };
+    decode_cast_o.amo_op = (decode_cast_o.amo_subop != e_dcache_subop_none);
 
     decode_cast_o.l2_op =
       ((lr_sc_p == e_l2) && (decode_cast_o.lr_op || decode_cast_o.sc_op))
