@@ -219,10 +219,10 @@
 
       ,l1_writethrough      : 0
       ,l1_coherent          : 0
-      ,dcache_sets          : 64
-      ,dcache_assoc         : 8
-      ,dcache_block_width   : 512
-      ,dcache_fill_width    : 512
+      ,dcache_sets          : 256
+      ,dcache_assoc         : 2
+      ,dcache_block_width   : 128
+      ,dcache_fill_width    : 128
       ,icache_sets          : 64
       ,icache_assoc         : 8
       ,icache_block_width   : 512

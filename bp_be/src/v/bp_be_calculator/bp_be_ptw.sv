@@ -104,6 +104,7 @@ module bp_be_ptw
   assign dcache_pkt.opcode      = e_dcache_op_ld;
   assign dcache_pkt.page_offset = {partial_vpn[level_cntr], (lg_pte_size_in_bytes_lp)'(0)};
   assign dcache_pkt.data        = '0;
+  assign dcache_pkt.rd_addr     = '0;
 
   assign busy_o                 = (state_r != eIdle);
 

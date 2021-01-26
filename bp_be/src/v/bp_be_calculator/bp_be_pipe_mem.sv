@@ -311,6 +311,7 @@ module bp_be_pipe_mem
         dcache_pkt.opcode      = bp_be_dcache_fu_op_e'(decode.fu_op);
         dcache_pkt.page_offset = eaddr[0+:page_offset_width_gp];
         dcache_pkt.data        = rs2;
+        dcache_pkt.rd_addr     = instr.t.rtype.rd_addr;
         dcache_ptag = dtlb_ptag_lo;
         dcache_ptag_v = dtlb_v_lo;
       end

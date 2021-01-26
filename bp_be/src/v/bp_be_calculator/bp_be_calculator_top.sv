@@ -94,7 +94,7 @@ module bp_be_calculator_top
 
   // Cast input and output ports
   bp_be_dispatch_pkt_s   dispatch_pkt;
-  bp_be_wb_pkt_s         long_iwb_pkt, long_fwb_pkt, calc_iwb_pkt, calc_fwb_pkt, mem_iwb_pkt, mem_fwb_pkt;
+  bp_be_wb_pkt_s         long_iwb_pkt, long_fwb_pkt, mem_iwb_pkt, mem_fwb_pkt;
   bp_be_commit_pkt_s     commit_pkt;
 
   assign dispatch_pkt = dispatch_pkt_i;

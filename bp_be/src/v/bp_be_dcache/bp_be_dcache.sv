@@ -180,7 +180,7 @@ module bp_be_dcache
   #(.bp_params_p(bp_params_p))
     pkt_decoder
     (.pkt_i(dcache_pkt_i)
-    ,.decoded_o(decode_lo)
+    ,.decode_o(decode_lo)
     );
 
   assign addr_index = dcache_pkt.page_offset[block_offset_width_lp+:index_width_lp];
@@ -372,15 +372,15 @@ module bp_be_dcache
   // For L2 atomics
   wire lr_req      = v_tv_r & decode_tv_r.lr_op;
   wire sc_req      = v_tv_r & decode_tv_r.sc_op;
-  wire amoswap_req = v_tv_r & decode_tv_r.amoswap_op;
-  wire amoadd_req  = v_tv_r & decode_tv_r.amoadd_op;
-  wire amoxor_req  = v_tv_r & decode_tv_r.amoxor_op;
-  wire amoand_req  = v_tv_r & decode_tv_r.amoand_op;
-  wire amoor_req   = v_tv_r & decode_tv_r.amoor_op;
-  wire amomin_req  = v_tv_r & decode_tv_r.amomin_op;
-  wire amomax_req  = v_tv_r & decode_tv_r.amomax_op;
-  wire amominu_req = v_tv_r & decode_tv_r.amominu_op;
-  wire amomaxu_req = v_tv_r & decode_tv_r.amomaxu_op;
+  wire amoswap_req = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoswap);
+  wire amoadd_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoadd);
+  wire amoxor_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoxor);
+  wire amoand_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoand);
+  wire amoor_req   = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amoor);
+  wire amomin_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amomin);
+  wire amomax_req  = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amomax);
+  wire amominu_req = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amominu);
+  wire amomaxu_req = v_tv_r & (decode_tv_r.amo_subop == e_dcache_subop_amomaxu);
   wire l2_amo_req  = v_tv_r & decode_tv_r.l2_op;
 
   // load reserved / store conditional
@@ -920,7 +920,7 @@ module bp_be_dcache
         word_op_dm_r       <= decode_tv_r.word_op;
         half_op_dm_r       <= decode_tv_r.half_op;
         byte_op_dm_r       <= decode_tv_r.byte_op;
-        snoop_offset_dm_r  <= paddr_tv_r[2+:snoop_offset_width_p];
+        snoop_offset_dm_r  <= paddr_tv_r[3+:snoop_offset_width_p];
       end
 
       if (cache_req_critical_i) begin
