@@ -43,8 +43,6 @@ module bp_be_calculator_top
   // Calculator - Checker interface
   , input [dispatch_pkt_width_lp-1:0]               dispatch_pkt_i
 
-  , input                                           flush_i
-
   , output                                          fpu_en_o
   , output                                          long_ready_o
   , output                                          mem_ready_o
@@ -126,6 +124,7 @@ module bp_be_calculator_top
   logic pipe_ctl_data_lo_v, pipe_int_data_lo_v, pipe_aux_data_lo_v, pipe_mem_early_data_lo_v, pipe_mem_final_data_lo_v, pipe_sys_data_lo_v, pipe_mul_data_lo_v, pipe_fma_data_lo_v;
   logic pipe_long_idata_lo_v, pipe_long_idata_lo_yumi, pipe_long_fdata_lo_v, pipe_long_fdata_lo_yumi;
   logic pipe_mem_late_idata_lo_v, pipe_mem_late_fdata_lo_v;
+  logic pipe_mem_late_idata_lo_yumi, pipe_mem_late_fdata_lo_yumi;
   logic [dpath_width_gp-1:0] pipe_ctl_data_lo, pipe_int_data_lo, pipe_aux_data_lo, pipe_mem_early_data_lo, pipe_mem_final_data_lo, pipe_sys_data_lo, pipe_mul_data_lo, pipe_fma_data_lo;
   rv64_fflags_s pipe_aux_fflags_lo, pipe_fma_fflags_lo;
 
@@ -205,7 +204,6 @@ module bp_be_calculator_top
      ,.reset_i(reset_i)
 
      ,.reservation_i(reservation_r)
-     ,.flush_i(flush_i)
 
      ,.data_o(pipe_ctl_data_lo)
      ,.br_pkt_o(br_pkt_o)
@@ -251,11 +249,13 @@ module bp_be_calculator_top
 
      ,.cfg_bus_i(cfg_bus_i)
 
-     ,.flush_i(flush_i)
      ,.sfence_i(commit_pkt.sfence)
 
-     ,.reservation_i(reservation_r)
      ,.ready_o(pipe_mem_ready_lo)
+     ,.reservation_i(reservation_r)
+
+     // TODO: Need to flush the rest of the D$ pipeline when there's a miss
+     ,.flush_i(commit_pkt.redirect_v)
 
      ,.ptw_miss_pkt_i(ptw_miss_pkt)
      ,.ptw_fill_pkt_o(ptw_fill_pkt)
@@ -303,8 +303,10 @@ module bp_be_calculator_top
      ,.final_v_o(pipe_mem_final_data_lo_v)
      ,.late_iwb_pkt_o(mem_iwb_pkt)
      ,.late_iwb_pkt_v_o(pipe_mem_late_idata_lo_v)
+     ,.late_iwb_pkt_yumi_i(pipe_mem_late_idata_lo_yumi)
      ,.late_fwb_pkt_o(mem_fwb_pkt)
      ,.late_fwb_pkt_v_o(pipe_mem_late_fdata_lo_v)
+     ,.late_fwb_pkt_yumi_i(pipe_mem_late_fdata_lo_yumi)
 
      ,.trans_info_i(trans_info_lo)
      );
@@ -321,7 +323,6 @@ module bp_be_calculator_top
      ,.ptw_busy_i(ptw_busy_o)
 
      ,.reservation_i(reservation_r)
-     ,.flush_i(flush_i)
 
      ,.ptw_miss_pkt_o(ptw_miss_pkt)
      ,.ptw_fill_pkt_i(ptw_fill_pkt)
@@ -372,7 +373,6 @@ module bp_be_calculator_top
      ,.reset_i(reset_i)
 
      ,.reservation_i(reservation_r)
-     ,.flush_i(flush_i)
      ,.ready_o(pipe_long_ready_lo)
      ,.frm_dyn_i(frm_dyn_lo)
 
@@ -462,12 +462,10 @@ module bp_be_calculator_top
           exc_stage_n[2].roll_v                 |= pipe_sys_miss_v_lo;
           exc_stage_n[3].roll_v                 |= pipe_sys_miss_v_lo;
 
-          exc_stage_n[0].poison_v               |= reservation_n.poison;
-          exc_stage_n[1].poison_v               |= flush_i;
-          exc_stage_n[2].poison_v               |= flush_i;
-          // We only poison on exception or cache miss, because we also flush
-          // on, for instance, fence.i
-          exc_stage_n[3].poison_v               |= pipe_sys_miss_v_lo | pipe_sys_exc_v_lo;
+          exc_stage_n[0].poison_v               |= commit_pkt.redirect_v | reservation_n.poison;
+          exc_stage_n[1].poison_v               |= commit_pkt.redirect_v;
+          exc_stage_n[2].poison_v               |= commit_pkt.redirect_v;
+          exc_stage_n[3].poison_v               |= ~commit_pkt.instret;
 
           exc_stage_n[0].exc.itlb_miss          |= reservation_n.decode.itlb_miss;
           exc_stage_n[0].exc.icache_miss        |= reservation_n.decode.icache_miss;
@@ -499,11 +497,14 @@ module bp_be_calculator_top
      ,.data_o(exc_stage_r)
      );
 
-  assign pipe_long_idata_lo_yumi = pipe_long_idata_lo_v & ~comp_stage_r[4].ird_w_v;
-  assign pipe_long_fdata_lo_yumi = pipe_long_fdata_lo_v & ~comp_stage_r[5].frd_w_v & ~comp_stage_r[5].fflags_w_v;
+  assign pipe_mem_late_idata_lo_yumi = pipe_mem_late_idata_lo_v & ~comp_stage_r[4].ird_w_v;
+  assign pipe_mem_late_fdata_lo_yumi = pipe_mem_late_fdata_lo_v & ~comp_stage_r[5].frd_w_v;
 
-  assign iwb_pkt_o = pipe_mem_late_idata_lo_v ? mem_iwb_pkt : pipe_long_idata_lo_yumi ? long_iwb_pkt : comp_stage_r[4];
-  assign fwb_pkt_o = pipe_mem_late_fdata_lo_v ? mem_fwb_pkt : pipe_long_fdata_lo_yumi ? long_fwb_pkt : comp_stage_r[5];
+  assign pipe_long_idata_lo_yumi = pipe_long_idata_lo_v & ~pipe_mem_late_idata_lo_v & ~comp_stage_r[4].ird_w_v;
+  assign pipe_long_fdata_lo_yumi = pipe_long_fdata_lo_v & ~pipe_mem_late_fdata_lo_v & ~comp_stage_r[5].frd_w_v;
+
+  assign iwb_pkt_o = pipe_mem_late_idata_lo_yumi ? mem_iwb_pkt : pipe_long_idata_lo_yumi ? long_iwb_pkt : comp_stage_r[4];
+  assign fwb_pkt_o = pipe_mem_late_fdata_lo_yumi ? mem_fwb_pkt : pipe_long_fdata_lo_yumi ? long_fwb_pkt : comp_stage_r[5];
 
   assign mem_ready_o  = pipe_mem_ready_lo;
   assign long_ready_o = pipe_long_ready_lo;

@@ -18,8 +18,6 @@ module bp_be_pipe_long
    , output                            ready_o
    , input rv64_frm_e                  frm_dyn_i
 
-   , input                             flush_i
-
    , output [wb_pkt_width_lp-1:0]      iwb_pkt_o
    , output                            iwb_v_o
    , input                             iwb_yumi_i

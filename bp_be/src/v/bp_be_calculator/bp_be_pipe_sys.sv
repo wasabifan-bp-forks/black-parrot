@@ -34,7 +34,6 @@ module bp_be_pipe_sys
    , input [cfg_bus_width_lp-1:0]         cfg_bus_i
 
    , input [dispatch_pkt_width_lp-1:0]    reservation_i
-   , input                                flush_i
 
    , output                               ready_o
    , input                                ptw_busy_i

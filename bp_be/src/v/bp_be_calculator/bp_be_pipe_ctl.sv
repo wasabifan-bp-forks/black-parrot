@@ -25,7 +25,6 @@ module bp_be_pipe_ctl
    , input                             reset_i
 
    , input [dispatch_pkt_width_lp-1:0] reservation_i
-   , input                             flush_i
 
    , output [dpath_width_gp-1:0]        data_o
    , output [branch_pkt_width_lp-1:0]  br_pkt_o
@@ -75,7 +74,7 @@ module bp_be_pipe_ctl
   assign data_o   = vaddr_width_p'($signed(ntaken_tgt));
   assign v_o      = reservation.v & ~reservation.poison & reservation.decode.pipe_ctl_v;
 
-  assign br_pkt.v         = reservation.v & ~reservation.poison & ~flush_i;
+  assign br_pkt.v         = reservation.v & ~reservation.poison;
   assign br_pkt.branch    = reservation.v & ~reservation.poison & reservation.decode.pipe_ctl_v;
   assign br_pkt.btaken    = reservation.v & ~reservation.poison & reservation.decode.pipe_ctl_v & btaken;
   assign br_pkt.npc       = btaken ? {taken_tgt[vaddr_width_p-1:1], 1'b0} : ntaken_tgt;

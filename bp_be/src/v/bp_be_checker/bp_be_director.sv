@@ -44,8 +44,6 @@ module bp_be_director
    , output                           poison_isd_o
    , output                           suppress_iss_o
 
-   , output logic                     flush_o
-
    // FE-BE interface
    , output [fe_cmd_width_lp-1:0]     fe_cmd_o
    , output                           fe_cmd_v_o
@@ -83,13 +81,14 @@ module bp_be_director
   logic [vaddr_width_p-1:0]               npc_plus4;
   logic [vaddr_width_p-1:0]               npc_n, npc_r, pc_r;
   logic                                   npc_mismatch_v;
+  logic                                   flush;
 
   // Logic for handling coming out of reset
   enum logic [1:0] {e_reset, e_boot, e_run, e_fence} state_n, state_r;
 
   // Module instantiations
   // Update the NPC on a valid instruction in ex1 or a cache miss or a tlb miss
-  wire npc_w_v = br_pkt.v | commit_pkt.trap_v | ptw_fill_pkt.itlb_fill_v;
+  wire npc_w_v = br_pkt.v | commit_pkt.redirect_v | ptw_fill_pkt.itlb_fill_v;
   bsg_dff_reset_en
    #(.width_p(vaddr_width_p), .reset_val_p($unsigned(boot_pc_p)))
    npc
@@ -100,10 +99,10 @@ module bp_be_director
      ,.data_i(npc_n)
      ,.data_o(npc_r)
      );
-  assign npc_n = ptw_fill_pkt.itlb_fill_v ? ptw_fill_pkt.vaddr : commit_pkt.trap_v ? commit_pkt.npc : br_pkt.npc;
+  assign npc_n = ptw_fill_pkt.itlb_fill_v ? ptw_fill_pkt.vaddr : commit_pkt.redirect_v ? commit_pkt.npc : br_pkt.npc;
 
   assign npc_mismatch_v = isd_status_cast_i.v & (expected_npc_o != isd_status_cast_i.pc);
-  assign poison_isd_o = npc_mismatch_v | flush_o;
+  assign poison_isd_o = npc_mismatch_v | flush;
 
   logic btaken_pending, attaboy_pending;
   bsg_dff_reset_set_clear
@@ -154,7 +153,7 @@ module bp_be_director
     begin : fe_cmd_adapter
       fe_cmd_li = 'b0;
       fe_cmd_v_li = 1'b0;
-      flush_o = 1'b0;
+      flush = 1'b0;
 
       // Do not send anything on reset
       if (state_r == e_reset)
@@ -182,7 +181,7 @@ module bp_be_director
 
           fe_cmd_v_li = fe_cmd_ready_lo;
 
-          flush_o = 1'b1;
+          flush = 1'b1;
         end
       else if (commit_pkt.sfence)
         begin
@@ -191,7 +190,7 @@ module bp_be_director
 
           fe_cmd_v_li = fe_cmd_ready_lo;
 
-          flush_o = 1'b1;
+          flush = 1'b1;
         end
       else if (commit_pkt.satp)
         begin
@@ -205,7 +204,7 @@ module bp_be_director
 
           fe_cmd_v_li = fe_cmd_ready_lo;
 
-          flush_o = 1'b1;
+          flush = 1'b1;
         end
       else if (commit_pkt.fencei)
         begin
@@ -214,7 +213,7 @@ module bp_be_director
 
           fe_cmd_v_li = fe_cmd_ready_lo;
 
-          flush_o = 1'b1;
+          flush = 1'b1;
         end
       else if (commit_pkt.icache_miss)
         begin
@@ -223,7 +222,7 @@ module bp_be_director
 
           fe_cmd_v_li = fe_cmd_ready_lo;
 
-          flush_o = 1'b1;
+          flush = 1'b1;
         end
       // Redirect the pc if there's an NPC mismatch
       // Should not lump trap and ret into branch misprediction
@@ -243,11 +242,11 @@ module bp_be_director
 
           fe_cmd_v_li = fe_cmd_ready_lo;
 
-          flush_o = 1'b1;
+          flush = 1'b1;
         end
       else if (commit_pkt.rollback)
         begin
-          flush_o = 1'b1;
+          flush = 1'b1;
         end
       else if (isd_status_cast_i.v & npc_mismatch_v)
         begin

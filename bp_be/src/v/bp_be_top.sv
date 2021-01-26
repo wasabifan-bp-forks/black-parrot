@@ -97,7 +97,6 @@ module bp_be_top
   logic fe_cmd_full_lo;
   logic mem_ready_lo, long_ready_lo, sys_ready_lo, ptw_busy_lo;
 
-  logic flush;
   bp_be_director
    #(.bp_params_p(bp_params_p))
    director
@@ -116,7 +115,6 @@ module bp_be_top
 
      ,.suppress_iss_o(suppress_iss_lo)
      ,.poison_isd_o(poison_isd_lo)
-     ,.flush_o(flush)
 
      ,.br_pkt_i(br_pkt)
      ,.commit_pkt_i(commit_pkt)
@@ -180,8 +178,6 @@ module bp_be_top
      ,.cfg_bus_i(cfg_bus_i)
 
      ,.dispatch_pkt_i(dispatch_pkt)
-
-     ,.flush_i(flush)
 
      ,.fpu_en_o(fpu_en_lo)
      ,.mem_ready_o(mem_ready_lo)

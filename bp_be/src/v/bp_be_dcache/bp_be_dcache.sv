@@ -108,28 +108,33 @@ module bp_be_dcache
 
    , localparam dcache_pkt_width_lp=$bits(bp_be_dcache_pkt_s)
    )
-  (input                              clk_i
-   , input                            reset_i
+  (input                                 clk_i
+   , input                               reset_i
 
-   , input [cfg_bus_width_lp-1:0]     cfg_bus_i
+   , input [cfg_bus_width_lp-1:0]        cfg_bus_i
 
-   , input [dcache_pkt_width_lp-1:0]  dcache_pkt_i
-   , input                            v_i
-   , output logic                     ready_o
+   , input [dcache_pkt_width_lp-1:0]     dcache_pkt_i
+   , input                               v_i
+   , output logic                        ready_o
 
    // TLB interface
-   , input [ptag_width_p-1:0]         ptag_i
-   , input                            ptag_v_i
-   , input                            uncached_i
+   , input [ptag_width_p-1:0]            ptag_i
+   , input                               ptag_v_i
+   , input                               uncached_i
 
-   , output logic                      miss_v_o
-   , output logic [dpath_width_gp-1:0] early_data_o
-   , output logic                      early_v_o
-   , output logic [dpath_width_gp-1:0] final_data_o
-   , output logic                      final_v_o
+   , output logic [dpath_width_p-1:0]    early_data_o
+   , output logic                        early_miss_v_o
+   , output logic                        early_v_o
+   , output logic [dpath_width_p-1:0]    final_data_o
+   , output logic                        final_v_o
+   , output logic [reg_addr_width_p-1:0] late_rd_addr_o
+   , output logic                        late_float_o
+   , output logic [dpath_width_p-1:0]    late_data_o
+   , output logic                        late_v_o
+   , input                               late_yumi_i
 
    // ctrl
-   , input                            flush_i
+   , input                               flush_i
 
    // D$ Engine Interface
    , output logic [dcache_req_width_lp-1:0]          cache_req_o
@@ -452,7 +457,7 @@ module bp_be_dcache
   assign sc_fail     = v_tv_r & decode_tv_r.sc_op & ~sc_success;
   assign uncached_load_req = v_tv_r & decode_tv_r.load_op & uncached_tv_r;
   assign uncached_store_req = v_tv_r & decode_tv_r.store_op & uncached_tv_r;
-  assign fencei_req = v_tv_r & decode_tv_r.fencei_op;
+  assign fencei_req = v_tv_r & decode_tv_r.fencei_op & gdirty_r & (l1_coherent_p == 0);
 
   // write buffer
   //
@@ -722,7 +727,7 @@ module bp_be_dcache
     else if(fencei_req) begin
       // Don't flush on fencei when coherent
       cache_req_cast_o.msg_type = e_cache_flush;
-      cache_req_v_o = gdirty_r & (l1_coherent_p == 0) & ~flush_i;
+      cache_req_v_o = ~flush_i;
     end
 
     cache_req_cast_o.addr = paddr_tv_r;
@@ -743,15 +748,17 @@ module bp_be_dcache
   assign cache_req_metadata_cast_o.repl_way = lru_way_li;
   assign cache_req_metadata_cast_o.dirty = stat_mem_data_lo.dirty[lru_way_li];
 
-  enum logic [1:0] {e_ready, e_miss} state_n, state_r;
+  enum logic [1:0] {e_ready, e_miss, e_late} state_n, state_r;
   wire is_ready = (state_r == e_ready);
   wire is_miss  = (state_r == e_miss);
+  wire is_late  = (state_r == e_late);
   // Cache Miss Tracking logic
   always_comb
     case (state_r)
      // Uncached stores and writethrough requests are non-blocking
       e_ready: state_n = (cache_req_yumi_i & ~uncached_store_req & ~wt_req) ? e_miss : e_ready;
-      e_miss : state_n = cache_req_complete_i ? e_ready : e_miss;
+      e_miss : state_n = cache_req_complete_i ? (decode_tv_r.load_op ? e_late : e_ready) : e_miss;
+      e_late : state_n = late_yumi_i ? e_ready : e_late;
       default: state_n = e_ready;
     endcase
 
@@ -764,8 +771,8 @@ module bp_be_dcache
 
   assign ready_o = ~cache_req_busy_i & is_ready;
 
-  assign miss_v_o = v_tv_r & cache_req_yumi_i & ~uncached_store_req & ~wt_req;
-  assign early_v_o = v_tv_r & ~miss_v_o & ~cache_req_v_o;
+  assign early_miss_v_o = v_tv_r & cache_req_yumi_i & ~uncached_store_req & ~wt_req;
+  assign early_v_o = v_tv_r & ~early_miss_v_o & ~cache_req_v_o;
 
   // Maintain a global dirty bit for the cache. When data is written to the write buffer, we set
   //   it. When we send a flush request to the CE, we clear it.
@@ -897,10 +904,12 @@ module bp_be_dcache
   //
   logic dm_we;
   logic v_dm_r;
+  logic load_op_dm_r;
   logic [dword_width_gp-1:0] data_dm_r;
   logic [3:0] byte_offset_dm_r;
   logic double_op_dm_r, word_op_dm_r, half_op_dm_r, byte_op_dm_r;
   logic signed_op_dm_r, float_op_dm_r;
+  logic [reg_addr_width_p-1:0] rd_addr_dm_r;
 
   assign dm_we = v_tv_r;
   always_ff @(posedge clk_i) begin
@@ -910,6 +919,7 @@ module bp_be_dcache
       v_dm_r <= dm_we & early_v_o & ~flush_i;
 
       if (dm_we) begin
+        load_op_dm_r       <= decode_tv_r.load_op;
         data_dm_r          <= early_data_o;
         byte_offset_dm_r   <= paddr_tv_r[0+:4];
         signed_op_dm_r     <= decode_tv_r.signed_op;
@@ -918,6 +928,7 @@ module bp_be_dcache
         word_op_dm_r       <= decode_tv_r.word_op;
         half_op_dm_r       <= decode_tv_r.half_op;
         byte_op_dm_r       <= decode_tv_r.byte_op;
+        rd_addr_dm_r       <= decode_tv_r.rd_addr;
       end
     end
   end
@@ -935,6 +946,11 @@ module bp_be_dcache
 
   assign final_data_o = float_op_dm_r ? final_float_data : data_dm_r;
   assign final_v_o = v_dm_r;
+
+  assign late_rd_addr_o = rd_addr_dm_r;
+  assign late_float_o   = float_op_dm_r;
+  assign late_data_o    = final_data_o;
+  assign late_v_o       = is_late;
 
   // ctrl logic
   //
