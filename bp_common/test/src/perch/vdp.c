@@ -141,6 +141,8 @@ uint64_t bp_call_zipline_accelerator(uint8_t type, struct Zipline_CSR zipline_cs
   for (i=0; i < input_tlv_num; i++)
   {
     bp_set_mmio_csr(cfg_base_addr, TLV_TYPE, zipline_csrs.input_ptr[i].type);
+    if (zipline_csrs.input_ptr[i].type == 3)
+      bp_set_mmio_csr(cfg_base_addr, DATA_TLV_PART, zipline_csrs.input_ptr[i].part);
     bp_hw_dma(cfg_base_dma_addr, zipline_csrs.input_ptr[i].data_ptr, zipline_csrs.input_ptr[i].length, 0);
   }
   
