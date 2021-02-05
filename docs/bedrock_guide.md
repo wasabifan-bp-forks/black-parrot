@@ -1,21 +1,25 @@
-# The BedRock Coherence System
+# The BedRock Network Specification
 
-BedRock is the cache coherence system in the BlackParrot system. BedRock ensures that every core's
-data and instruction caches are kept coherent to ensure correctness of multicore shared-memory
-operation. BedRock also supports the integration of cache coherent accelerators.
+The BedRock Network Specification defines the on-chip networks used by the cache coherence
+and memory system in the BlackParrot system. The cache coherence system keeps the data and
+instruction caches of core coherent with eachother for shared-memory multicore designs. The protocols
+also support integration of cache coherent accelerators.
 
-BedRock comprises three major components: a Cache Coherence Engine (CCE) that contains and
-manages the coherence directory, a Local Cache Engine (LCE) that manages entities such as data
-and instruction caches participating in coherence, and the coherence networks that carry the
-protocol messages. BedRock currently has two CCE implementations, which are described below.
+BedRock comprises five network channels. Three are used for the LCE-CCE networks and two are used
+for the CCE-Memory networks. BedRock also defines a generic network message format that can be
+adapted for use in other networks.
 
-A typcial system has many LCEs and one or more CCEs. In BlackParrot, each
-standard tile contains a BlackParrot core, data cache and LCE, instruction cache and LCE, and
-a CCE. Multiple CCEs manage independent subsets of the physical address space, with the mapping
-being consistent throughout the system, and therefore each CCE operates completely independently
-from all other CCEs. The current mapping from address to CCE stripes cache blocks across the CCEs
-in the system. All cache blocks that map to the same cache set will map to the same
-CCE.
+BlackParrot's BedRock-based cache coherence system comprises three major components: a Cache
+Coherence Engine (CCE) that contains and manages the coherence directory, a Local Cache Engine
+(LCE) that manages entities such as data and instruction caches participating in coherence, and the
+three LCE-CCE networks that carry the coherence protocol messages. BedRock currently has two CCE
+implementations, which are described below.
+
+BlackParrot's BedRock-based memory system comprises two identical BedRock networks connecting the
+cache coherence engines (CCEs) and memory (either directly or through L2 cache slices). Each CCE
+manages a subset of the physical address space and operates completely independently from all
+other CCEs. The current mapping from address to CCE stripes cache blocks across the CCEs in the
+system. All cache blocks that map to the same cache set will map to the same CCE.
 
 The current implementation of BlackParrot uses point-to-point ordered networks for the
 coherence networks, however the coherence protocol is designed and verified correct
@@ -23,11 +27,11 @@ for unordered or ordered networks.
 
 ![BedRock System diagram](bedrock.png)
 
-## Networks
+## Coherence Networks
 
 BedRock sends and receives messages on three networks, called Request, Command, and Response.
-The messages carried on the BedRock networks are fully defined in the
-[ME Interface](../bp_common/src/include/bp_common_me_if.vh) file of the BlackParrot repository.
+The messages carried on these three BedRock channels are fully defined in the
+[BedRock Interface](../bp_common/src/include/bp_common_bedrock_if.svh) file.
 The [BlackParrot Interface Specification](interface_specification.md) contains a more detailed
 overview of the messages carried by the BedRock coherence networks, which are briefly overviewed
 here.
