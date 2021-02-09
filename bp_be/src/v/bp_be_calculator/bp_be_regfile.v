@@ -90,7 +90,7 @@ module bp_be_regfile
     end
   else
     begin : error
-      $fatal(1, "Error: unsupported number of read ports");
+      //$fatal(1, "Error: unsupported number of read ports");
     end
 
   // Save the written data for forwarding

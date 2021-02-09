@@ -108,7 +108,8 @@ wire domain_w_v_li = cfg_w_v_li & (cfg_addr_li == bp_cfg_reg_domain_mask_gp);
 wire [7:0] domain_li = cfg_data_li[7:0] | 8'h01;
 
 wire sac_w_v_li = cfg_w_v_li & (cfg_addr_li == bp_cfg_reg_sac_mask_gp);
-wire sac_li = cfg_data_li[0];
+//wire sac_li = cfg_data_li[0];
+wire sac_li = 1'b1;
 
 // Address map (40 bits)
 // | did | sac_not_cc | tile ID | remaining |
