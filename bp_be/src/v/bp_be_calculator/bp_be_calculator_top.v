@@ -254,6 +254,7 @@ module bp_be_calculator_top
   logic                                mstatus_mxr_lo;
 
   logic                                pipe_mem_ready_lo;
+  logic                                l2_amo_in_progress_lo;
   // Memory pipe: 2/3 cycle latency
   bp_be_pipe_mem
    #(.bp_params_p(bp_params_p))
@@ -279,6 +280,7 @@ module bp_be_calculator_top
      ,.cache_req_metadata_v_o(cache_req_metadata_v_o)
      ,.cache_req_critical_i(cache_req_critical_i)
      ,.cache_req_complete_i(cache_req_complete_i)
+     ,.l2_amo_in_progress_o(l2_amo_in_progress_lo)
 
      ,.data_mem_pkt_i(data_mem_pkt_i)
      ,.data_mem_pkt_v_i(data_mem_pkt_v_i)
@@ -314,6 +316,59 @@ module bp_be_calculator_top
      );
 
   logic pipe_long_ready_lo, pipe_sys_ready_lo;
+  logic timer_irq_lo, timer_irq_v_lo, timer_irq_yumi_li;
+  logic software_irq_lo, software_irq_v_lo, software_irq_yumi_li;
+  logic external_irq_lo, external_irq_v_lo, external_irq_yumi_li;
+
+  bsg_two_fifo
+   #(.width_p(1))
+   timer_irq_fifo
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+
+     ,.data_i(timer_irq_i)
+     ,.v_i(timer_irq_i)
+     ,.ready_o()
+
+     ,.data_o(timer_irq_lo)
+     ,.v_o(timer_irq_v_lo)
+     ,.yumi_i(timer_irq_yumi_li)
+     );
+
+  bsg_two_fifo
+   #(.width_p(1))
+   software_irq_fifo
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+
+     ,.data_i(software_irq_i)
+     ,.v_i(software_irq_i)
+     ,.ready_o()
+
+     ,.data_o(software_irq_lo)
+     ,.v_o(software_irq_v_lo)
+     ,.yumi_i(software_irq_yumi_li)
+     );
+
+  bsg_two_fifo
+   #(.width_p(1))
+   external_irq_fifo
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+
+     ,.data_i(external_irq_i)
+     ,.v_i(external_irq_i)
+     ,.ready_o()
+
+     ,.data_o(external_irq_lo)
+     ,.v_o(external_irq_v_lo)
+     ,.yumi_i(external_irq_yumi_li)
+     );
+  
+  assign timer_irq_yumi_li = timer_irq_v_lo & ~l2_amo_in_progress_lo;
+  assign software_irq_yumi_li = software_irq_v_lo & ~l2_amo_in_progress_lo;
+  assign external_irq_yumi_li = external_irq_v_lo & ~l2_amo_in_progress_lo;
+
   bp_be_pipe_sys
    #(.bp_params_p(bp_params_p))
    pipe_sys
@@ -339,9 +394,9 @@ module bp_be_calculator_top
      ,.iwb_pkt_i(iwb_pkt_o)
      ,.fwb_pkt_i(fwb_pkt_o)
 
-     ,.timer_irq_i(timer_irq_i)
-     ,.software_irq_i(software_irq_i)
-     ,.external_irq_i(external_irq_i)
+     ,.timer_irq_i(timer_irq_yumi_li)
+     ,.software_irq_i(software_irq_yumi_li)
+     ,.external_irq_i(external_irq_yumi_li)
 
      ,.exc_v_o(pipe_sys_exc_v_lo)
      ,.miss_v_o(pipe_sys_miss_v_lo)

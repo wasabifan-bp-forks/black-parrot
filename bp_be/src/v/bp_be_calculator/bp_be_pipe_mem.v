@@ -70,6 +70,7 @@ module bp_be_pipe_mem
    , output logic                                    cache_req_metadata_v_o
    , input                                           cache_req_critical_i
    , input                                           cache_req_complete_i
+   , output                                          l2_amo_in_progress_o
 
    // data_mem
    , input data_mem_pkt_v_i
@@ -276,6 +277,7 @@ module bp_be_pipe_mem
       ,.cache_req_metadata_v_o(cache_req_metadata_v_o)
       ,.cache_req_critical_i(cache_req_critical_i)
       ,.cache_req_complete_i(cache_req_complete_i)
+      ,.l2_amo_in_progress_o(l2_amo_in_progress_o)
 
       ,.data_mem_pkt_v_i(data_mem_pkt_v_i)
       ,.data_mem_pkt_i(data_mem_pkt_i)

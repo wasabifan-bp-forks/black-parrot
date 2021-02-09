@@ -144,6 +144,7 @@ module bp_be_dcache
 
     , input cache_req_complete_i
     , input cache_req_critical_i
+    , output l2_amo_in_progress_o
 
     // data_mem
     , input data_mem_pkt_v_i
@@ -162,7 +163,6 @@ module bp_be_dcache
     , input [dcache_stat_mem_pkt_width_lp-1:0] stat_mem_pkt_i
     , output logic stat_mem_pkt_yumi_o
     , output logic [dcache_stat_info_width_lp-1:0] stat_mem_o
-
   );
 
   `declare_bp_cfg_bus_s(vaddr_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p, cce_pc_width_p, cce_instr_width_p);
@@ -1294,6 +1294,23 @@ module bp_be_dcache
      ,.data_i(data_mem_pkt.data[0+:dword_width_p])
      ,.data_o(uncached_load_data_r)
      );
+
+  logic l2_amo_in_progress_r;
+
+  bsg_dff_reset_set_clear
+   #(.width_p(1)
+     ,.clear_over_set_p(1)
+     )
+   timer_stop_reg
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
+
+     ,.set_i(uncached_i | decode_tv_r.l2_op)
+     ,.clear_i(early_v_o)
+     ,.data_o(l2_amo_in_progress_r)
+     );
+
+  assign l2_amo_in_progress_o = l2_amo_in_progress_r;
 
   // LCE tag_mem
 
