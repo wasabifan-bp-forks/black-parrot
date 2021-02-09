@@ -60,25 +60,20 @@ module bp_nonsynth_watchdog
      ,.count_o(instr_cnt)
      );
 
-  always_ff @(negedge clk_i)
-    if (reset_i === '0 && (stall_cnt >= timeout_cycles_p))
-      begin
-        $display("FAIL! Core %x stalled for %d cycles!", mhartid_i, stall_cnt);
-        $finish();
-      end
-    else if (reset_i === '0 && (npc_r === 'X))
-      begin
-        $display("FAIL! Core %x PC has become X!", mhartid_i);
-        $finish();
-      end
-
-  always_ff @(negedge clk_i)
-    begin
-      if (reset_i === '0 && (instr_cnt > '0) && (instr_cnt % heartbeat_instr_p == '0))
+   always_ff @(negedge clk_i)
+     begin
+        assert (reset_i !== '0 || (stall_cnt < timeout_cycles_p)) else
         begin
-          $display("BEAT: %d instructions completed (%d total)", heartbeat_instr_p, instr_cnt);
+           $display("FAIL! Core %x stalled for %d cycles!", mhartid_i, stall_cnt);
+           $finish();
         end
-    end
+        assert (reset_i !== '0 || (npc_r !== 'X)) else
+        begin
+           $display("FAIL! Core %x PC has become X!", mhartid_i);
+           $finish();
+       end
+     end // always_ff @
+   
 
 endmodule
 

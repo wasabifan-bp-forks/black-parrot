@@ -38,6 +38,7 @@ void bp_vdp_wait_for_completion(uint64_t *base_cfg_addr){
       status = bp_get_mmio_csr(base_cfg_addr, ACCEL_VPD_RESP_STATUS);
       if(status)
         break;
+      //__asm__ volatile("wfi": : :);
     }
 }
 
@@ -122,6 +123,7 @@ void bp_hw_dma(uint64_t *cfg_base_dma_addr, uint64_t *src, uint64_t length, uint
       status = bp_get_mmio_csr(cfg_base_dma_addr, DONE_DMA);
       if(status)
         break;
+      __asm__ volatile("wfi": : :);
     }
 }
 
