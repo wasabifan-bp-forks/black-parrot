@@ -152,6 +152,38 @@ package bp_common_aviary_pkg;
                         ,bp_unicore_cfg_p
                         );
 
+  localparam bp_proc_param_s bp_piton_override_p =
+    '{cc_x_dim              : 1
+      ,cc_y_dim             : 1
+      ,ic_y_dim             : 0
+      ,boot_pc              : bootrom_base_addr_gp
+      ,boot_in_debug        : 0
+      ,lr_sc                : e_l2
+      ,amo_swap             : e_l2
+      ,amo_fetch_logic      : e_l2
+      ,amo_fetch_arithmetic : e_l2
+      ,l1_writethrough      : 1
+      ,l1_coherent          : 1
+      ,icache_sets          : 128
+      ,icache_assoc         : 4
+      ,icache_block_width   : 256
+      ,icache_fill_width    : 256
+      ,dcache_sets          : 256
+      ,dcache_assoc         : 2
+      ,dcache_block_width   : 128
+      ,dcache_fill_width    : 128
+      ,acache_sets          : 256
+      ,acache_assoc         : 2
+      ,acache_block_width   : 128
+      ,acache_fill_width    : 128
+      ,l2_en                : 0
+      ,default : "inv"
+      };
+  `bp_aviary_derive_cfg(bp_piton_cfg_p
+                        ,bp_piton_override_p
+                        ,bp_unicore_cfg_p
+                        );
+
   localparam bp_proc_param_s bp_multicore_1_override_p =
     '{multicore      : 1
       ,num_cce       : 1
@@ -509,7 +541,8 @@ package bp_common_aviary_pkg;
   parameter bp_proc_param_s [max_cfgs-1:0] all_cfgs_gp =
   {
     // Various testing configs
-    bp_multicore_cce_ucode_half_cfg_p
+    bp_piton_cfg_p
+    ,bp_multicore_cce_ucode_half_cfg_p
     ,bp_multicore_half_cfg_p
     ,bp_unicore_half_cfg_p
 
@@ -560,7 +593,8 @@ package bp_common_aviary_pkg;
   typedef enum bit [lg_max_cfgs-1:0]
   {
     // Various testing configs
-    e_bp_multicore_cce_ucode_half_cfg       = 32
+    e_bp_piton_cfg                          = 33
+    ,e_bp_multicore_cce_ucode_half_cfg      = 32
     ,e_bp_multicore_half_cfg                = 31
     ,e_bp_unicore_half_cfg                  = 30
 
