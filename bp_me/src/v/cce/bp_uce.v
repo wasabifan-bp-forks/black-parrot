@@ -634,7 +634,7 @@ module bp_uce
           end
         e_amo_data_writeback:
           begin
-            mem_cmd_cast_o.header.msg_type = e_mem_msg_wr;
+            mem_cmd_cast_o.header.msg_type = e_bedrock_mem_wr;
             mem_cmd_cast_o.header.addr     = {cache_req_r.addr[paddr_width_p-1:block_offset_width_lp], bank_index, byte_offset_width_lp'(0)};
             mem_cmd_cast_o.header.size     = block_msg_size_lp;
             mem_cmd_cast_o.header.payload.lce_id = lce_id_i;
@@ -677,26 +677,26 @@ module bp_uce
           else if (amo_op_v_r)
             begin
               mem_cmd_cast_o.header.msg_type       = (cache_req_r.msg_type == e_amo_swap)
-                                                     ? e_cce_mem_amo_swap
+                                                     ? e_bedrock_mem_amo_swap
                                                      : (cache_req_r.msg_type == e_amo_add)
-                                                       ? e_cce_mem_amo_add
+                                                       ? e_bedrock_mem_amo_add
                                                        : (cache_req_r.msg_type == e_amo_xor)
-                                                         ? e_cce_mem_amo_xor
+                                                         ? e_bedrock_mem_amo_xor
                                                          : (cache_req_r.msg_type == e_amo_and)
-                                                           ? e_cce_mem_amo_and
+                                                           ? e_bedrock_mem_amo_and
                                                            : (cache_req_r.msg_type == e_amo_or)
-                                                             ? e_cce_mem_amo_or
+                                                             ? e_bedrock_mem_amo_or
                                                              : (cache_req_r.msg_type == e_amo_min)
-                                                               ? e_cce_mem_amo_min
+                                                               ? e_bedrock_mem_amo_min
                                                                : (cache_req_r.msg_type == e_amo_max)
-                                                                 ? e_cce_mem_amo_max
+                                                                 ? e_bedrock_mem_amo_max
                                                                  : (cache_req_r.msg_type == e_amo_minu)
-                                                                   ? e_cce_mem_amo_minu
+                                                                   ? e_bedrock_mem_amo_minu
                                                                    : (cache_req_r.msg_type == e_amo_maxu)
-                                                                     ? e_cce_mem_amo_maxu
-                                                                     : e_cce_mem_amo_swap;
+                                                                     ? e_bedrock_mem_amo_maxu
+                                                                     : e_bedrock_mem_amo_swap;
               mem_cmd_cast_o.header.addr           = cache_req_r.addr;
-              mem_cmd_cast_o.header.size           = (cache_req_r.size == e_size_4B) ? e_mem_msg_size_4 : e_mem_msg_size_8;
+              mem_cmd_cast_o.header.size           = (cache_req_r.size == e_size_4B) ? e_bedrock_msg_size_4 : e_bedrock_msg_size_8;
               mem_cmd_cast_o.header.payload.lce_id = lce_id_i;
               mem_cmd_cast_o.data                  = cache_req_r.data;
               mem_cmd_v_o = mem_cmd_ready_i;
