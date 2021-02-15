@@ -72,8 +72,8 @@ module bp_nonsynth_if_verif
     $fatal("Error: Writethrough with coherent_l1 is unsupported");
   if ((icache_fill_width_p > icache_block_width_p) || (dcache_fill_width_p > dcache_block_width_p))
     $fatal("Error: Cache fill width should be less or equal to L1 cache block width");
-  if ((icache_fill_width_p % (icache_block_width_p/icache_assoc_p) != 0) || (dcache_fill_width_p % (dcache_block_width_p / dcache_assoc_p) != 0))
-    $fatal("Error: Cache fill width should be a multiple of cache bank width");
+  if ((icache_fill_width_p < 64) || (dcache_fill_width_p < 64))
+    $fatal("Error: Cache fill widths lower than 64-bits not supported");
 
   if (vaddr_width_p != 39)
     $warning("Warning: VM will not work without 39 bit vaddr");
