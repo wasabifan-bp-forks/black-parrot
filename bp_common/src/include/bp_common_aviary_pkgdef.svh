@@ -218,8 +218,8 @@
 
       ,itlb_els_4k : 8
       ,dtlb_els_4k : 8
-      ,itlb_els_1g : 2
-      ,dtlb_els_1g : 2
+      ,itlb_els_1g : 1
+      ,dtlb_els_1g : 1
 
       ,lr_sc                : e_l1
       ,amo_swap             : e_none
@@ -728,6 +728,19 @@
                         ,bp_multicore_1_cce_ucode_cfg_p
                         );
 
+  localparam bp_proc_param_s bp_bigblade_unicore_override_p =
+    '{icache_fill_width  : 64
+      ,dcache_fill_width : 64
+      ,acache_fill_width : 64
+      ,paddr_width       : 44
+      ,l2_en             : 0
+      ,default : "inv"
+      };
+  `bp_aviary_derive_cfg(bp_bigblade_unicore_cfg_p
+                        ,bp_bigblade_unicore_override_p
+                        ,bp_unicore_no_l2_cfg_p
+                        );
+
   `ifndef BP_CUSTOM_BASE_CFG
   `define BP_CUSTOM_BASE_CFG bp_default_cfg_p
   `endif
@@ -822,8 +835,10 @@
   /* verilator lint_off WIDTH */
   parameter bp_proc_param_s [max_cfgs-1:0] all_cfgs_gp =
   {
+    bp_bigblade_unicore_cfg_p
+
     // Various testing configs
-    bp_multicore_cce_ucode_half_cfg_p
+    ,bp_multicore_cce_ucode_half_cfg_p
     ,bp_multicore_half_cfg_p
     ,bp_unicore_half_cfg_p
 
@@ -885,8 +900,10 @@
   // This enum MUST be kept up to date with the parameter array above
   typedef enum bit [lg_max_cfgs-1:0]
   {
+    e_bp_bigblade_unicore_cfg                       = 43
+
     // Various testing config
-    e_bp_multicore_cce_ucode_half_cfg               = 42
+    ,e_bp_multicore_cce_ucode_half_cfg              = 42
     ,e_bp_multicore_half_cfg                        = 41
     ,e_bp_unicore_half_cfg                          = 40
 

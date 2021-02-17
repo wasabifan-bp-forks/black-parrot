@@ -13,6 +13,7 @@
   localparam cfg_dev_gp   = 2;
   localparam clint_dev_gp = 3;
   localparam cache_dev_gp = 4;
+  localparam mc_dev_gp    = 5;
 
                              // 0x00_0(nnnN)(D)(A_AAAA)
   localparam boot_dev_base_addr_gp     = 32'h0000_0000;
@@ -20,6 +21,7 @@
   localparam cfg_dev_base_addr_gp      = 32'h0020_0000;
   localparam clint_dev_base_addr_gp    = 32'h0030_0000;
   localparam cache_dev_base_addr_gp    = 32'h0040_0000;
+  localparam mc_dev_base_addr_gp       = 32'h0050_0000;
 
   localparam mipi_reg_base_addr_gp     = 32'h0030_0000;
   localparam mtimecmp_reg_base_addr_gp = 32'h0030_4000;
