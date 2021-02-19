@@ -8,9 +8,13 @@
  *
  */
 
+`include "bp_me_defines.svh"
+
+`include "bp_common_defines.svh"
+`include "bp_me_defines.svh"
+
 module bp_cce
   import bp_common_pkg::*;
-  import bp_common_aviary_pkg::*;
   import bp_me_pkg::*;
   #(parameter bp_params_e bp_params_p      = e_bp_default_cfg
     `declare_bp_proc_params(bp_params_p)
@@ -25,7 +29,7 @@ module bp_cce
     , localparam lg_cce_way_groups_lp      = `BSG_SAFE_CLOG2(cce_way_groups_p)
 
     // Interface Widths
-    , localparam cfg_bus_width_lp          = `bp_cfg_bus_width(vaddr_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p, cce_pc_width_p, cce_instr_width_p)
+    , localparam cfg_bus_width_lp          = `bp_cfg_bus_width(domain_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p)
     `declare_bp_bedrock_lce_if_widths(paddr_width_p, cce_block_width_p, lce_id_width_p, cce_id_width_p, lce_assoc_p, lce)
     `declare_bp_bedrock_mem_if_widths(paddr_width_p, cce_block_width_p, lce_id_width_p, lce_assoc_p, cce)
   )
@@ -36,11 +40,11 @@ module bp_cce
    , input [cfg_bus_width_lp-1:0]                   cfg_bus_i
 
    // ucode programming interface, synchronous read, direct connection to RAM
-   , input                                          ucode_v_i
-   , input                                          ucode_w_i
-   , input [cce_pc_width_p-1:0]                     ucode_addr_i
-   , input [cce_instr_width_p-1:0]                  ucode_data_i
-   , output [cce_instr_width_p-1:0]                 ucode_data_o
+   , input                                             ucode_v_i
+   , input                                             ucode_w_i
+   , input [cce_pc_width_p-1:0]                        ucode_addr_i
+   , input [cce_instr_width_gp-1:0]                     ucode_data_i
+   , output [cce_instr_width_gp-1:0]                    ucode_data_o
 
    // LCE-CCE Interface
    // BP Burst protocol: ready&valid
@@ -110,7 +114,7 @@ module bp_cce
   `declare_bp_cce_mshr_s(lce_id_width_p, lce_assoc_p, paddr_width_p);
 
   // Config Interface
-  `declare_bp_cfg_bus_s(vaddr_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p, cce_pc_width_p, cce_instr_width_p);
+  `declare_bp_cfg_bus_s(domain_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p);
 
   // LCE-CCE Interface structs
   bp_bedrock_lce_req_msg_header_s  lce_req;

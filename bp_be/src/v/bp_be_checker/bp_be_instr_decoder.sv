@@ -15,30 +15,32 @@
  *     reevaluate this method of CSRRW.
  */
 
+`include "bp_common_defines.svh"
+`include "bp_be_defines.svh"
+
 module bp_be_instr_decoder
  import bp_common_pkg::*;
- import bp_common_aviary_pkg::*;
  import bp_be_pkg::*;
  #(parameter bp_params_e bp_params_p = e_bp_default_cfg
    `declare_bp_proc_params(bp_params_p)
 
    // Generated parameters
    , localparam instr_width_lp = rv64_instr_width_gp
-   , localparam decode_width_lp = `bp_be_decode_width
+   , localparam decode_width_lp = $bits(bp_be_decode_s)
    )
   (input                             fe_exc_not_instr_i
    , input bp_fe_exception_code_e    fe_exc_i
    , input [instr_width_lp-1:0]      instr_i
 
    , output [decode_width_lp-1:0]    decode_o
-   , output [dword_width_p-1:0]      imm_o
+   , output [dword_width_gp-1:0]     imm_o
 
    , input                           fpu_en_i
    );
 
   rv64_instr_fmatype_s instr;
   bp_be_decode_s decode;
-  logic [dword_width_p-1:0] imm;
+  logic [dword_width_gp-1:0] imm;
 
   assign instr    = instr_i;
   assign decode_o = decode;
@@ -100,13 +102,13 @@ module bp_be_instr_decoder
                                    })
               begin
                 decode.pipe_long_v = 1'b1;
-                decode.late_iwb_v  = 1'b1;
+                decode.late_iwb_v  = (instr.rd_addr != '0);
               end
             else
               decode.pipe_int_v = 1'b1;
 
             // The writeback for long latency ops comes out of band
-            decode.irf_w_v    = ~decode.late_iwb_v;
+            decode.irf_w_v    = ~decode.late_iwb_v & (instr.rd_addr != '0);
             decode.opw_v      = (instr.opcode == `RV64_OP_32_OP);
             unique casez (instr)
               `RV64_ADD, `RV64_ADDW : decode.fu_op = e_int_op_add;
@@ -134,7 +136,7 @@ module bp_be_instr_decoder
         `RV64_OP_IMM_OP, `RV64_OP_IMM_32_OP :
           begin
             decode.pipe_int_v = 1'b1;
-            decode.irf_w_v    = 1'b1;
+            decode.irf_w_v    = (instr.rd_addr != '0);
             decode.opw_v      = (instr.opcode == `RV64_OP_IMM_32_OP);
             unique casez (instr)
               `RV64_ADDI, `RV64_ADDIW : decode.fu_op = e_int_op_add;
@@ -155,14 +157,14 @@ module bp_be_instr_decoder
         `RV64_LUI_OP :
           begin
             decode.pipe_int_v = 1'b1;
-            decode.irf_w_v    = 1'b1;
+            decode.irf_w_v    = (instr.rd_addr != '0);
             decode.fu_op      = e_int_op_pass_src2;
             decode.src2_sel   = e_src2_is_imm;
           end
         `RV64_AUIPC_OP :
           begin
             decode.pipe_int_v = 1'b1;
-            decode.irf_w_v    = 1'b1;
+            decode.irf_w_v    = (instr.rd_addr != '0);
             decode.fu_op      = e_int_op_add;
             decode.src1_sel   = e_src1_is_pc;
             decode.src2_sel   = e_src2_is_imm;
@@ -170,14 +172,14 @@ module bp_be_instr_decoder
         `RV64_JAL_OP :
           begin
             decode.pipe_ctl_v = 1'b1;
-            decode.irf_w_v    = 1'b1;
+            decode.irf_w_v    = (instr.rd_addr != '0);
             decode.fu_op      = e_ctrl_op_jal;
             decode.baddr_sel  = e_baddr_is_pc;
           end
         `RV64_JALR_OP :
           begin
             decode.pipe_ctl_v = 1'b1;
-            decode.irf_w_v    = 1'b1;
+            decode.irf_w_v    = (instr.rd_addr != '0);
             unique casez (instr)
               `RV64_JALR: decode.fu_op = e_ctrl_op_jalr;
               default : illegal_instr = 1'b1;
@@ -200,8 +202,9 @@ module bp_be_instr_decoder
           end
         `RV64_LOAD_OP :
           begin
-            decode.pipe_mem_early_v = 1'b1;
-            decode.irf_w_v    = 1'b1;
+            decode.pipe_mem_early_v = instr inside {`RV64_LD, `RV64_LW, `RV64_LWU};
+            decode.pipe_mem_final_v = ~decode.pipe_mem_early_v;
+            decode.irf_w_v    = (instr.rd_addr != '0);
             decode.dcache_r_v = 1'b1;
             decode.mem_v      = 1'b1;
             unique casez (instr)
@@ -285,7 +288,7 @@ module bp_be_instr_decoder
               `RV64_SFENCE_VMA : decode.fu_op = e_sfence_vma;
               default:
                 begin
-                  decode.irf_w_v     = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   // TODO: Should not write/read based on x0
                   decode.csr_w_v     = 1'b1;
                   decode.csr_r_v     = 1'b1;
@@ -316,7 +319,7 @@ module bp_be_instr_decoder
               `RV64_FCVT_WS, `RV64_FCVT_LS:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.opw_v        = instr inside {`RV64_FCVT_WS};
                   decode.ops_v        = 1'b1;
@@ -325,7 +328,7 @@ module bp_be_instr_decoder
               `RV64_FCVT_WUS, `RV64_FCVT_LUS:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.opw_v        = instr inside {`RV64_FCVT_WUS};
                   decode.ops_v        = 1'b1;
@@ -352,7 +355,7 @@ module bp_be_instr_decoder
               `RV64_FCVT_WD, `RV64_FCVT_LD:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.opw_v        = instr inside {`RV64_FCVT_WD};
                   decode.fu_op        = e_aux_op_f2i;
@@ -360,7 +363,7 @@ module bp_be_instr_decoder
               `RV64_FCVT_WUD, `RV64_FCVT_LUD:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.opw_v        = instr inside {`RV64_FCVT_WUD};
                   decode.fu_op        = e_aux_op_f2iu;
@@ -384,7 +387,7 @@ module bp_be_instr_decoder
               `RV64_FMV_XW, `RV64_FMV_XD:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.opw_v        = instr inside {`RV64_FMV_XW};
                   decode.ops_v        = instr inside {`RV64_FMV_XW};
@@ -442,7 +445,7 @@ module bp_be_instr_decoder
               `RV64_FEQ_S, `RV64_FEQ_D:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.ops_v        = instr inside {`RV64_FEQ_S};
                   decode.fu_op        = e_aux_op_feq;
@@ -450,7 +453,7 @@ module bp_be_instr_decoder
               `RV64_FLT_S, `RV64_FLT_D:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.ops_v        = instr inside {`RV64_FLT_S};
                   decode.fu_op        = e_aux_op_flt;
@@ -458,7 +461,7 @@ module bp_be_instr_decoder
               `RV64_FLE_S, `RV64_FLE_D:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.ops_v        = instr inside {`RV64_FLE_S};
                   decode.fu_op        = e_aux_op_fle;
@@ -466,7 +469,7 @@ module bp_be_instr_decoder
               `RV64_FCLASS_S, `RV64_FCLASS_D:
                 begin
                   decode.pipe_aux_v   = 1'b1;
-                  decode.irf_w_v      = 1'b1;
+                  decode.irf_w_v    = (instr.rd_addr != '0);
                   decode.fflags_w_v   = 1'b1;
                   decode.ops_v        = instr inside {`RV64_FCLASS_S};
                   decode.fu_op        = e_aux_op_fclass;
@@ -535,7 +538,7 @@ module bp_be_instr_decoder
         `RV64_AMO_OP:
           begin
             decode.pipe_mem_early_v = 1'b1;
-            decode.irf_w_v    = 1'b1;
+            decode.irf_w_v    = (instr.rd_addr != '0);
             decode.dcache_r_v = ~(instr inside {`RV64_SCD, `RV64_SCW});
             decode.dcache_w_v = ~(instr inside {`RV64_LRD, `RV64_LRW});
             decode.mem_v      = 1'b1;

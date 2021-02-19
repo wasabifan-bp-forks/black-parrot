@@ -6,16 +6,10 @@
 
 module testbench
  import bp_common_pkg::*;
- import bp_common_aviary_pkg::*;
  import bp_me_pkg::*;
  import bp_me_nonsynth_pkg::*;
  #(parameter bp_params_e bp_params_p = BP_CFG_FLOWVAR // Replaced by the flow with a specific bp_cfg
    `declare_bp_proc_params(bp_params_p)
-
-   // interface widths
-   `declare_bp_bedrock_lce_if_widths(paddr_width_p, cce_block_width_p, lce_id_width_p, cce_id_width_p, lce_assoc_p, lce)
-   `declare_bp_bedrock_mem_if_widths(paddr_width_p, cce_block_width_p, lce_id_width_p, lce_assoc_p, cce)
-   `declare_bp_bedrock_mem_if_widths(paddr_width_p, dword_width_p, lce_id_width_p, lce_assoc_p, xce)
 
    , parameter cce_trace_p = 0
    , parameter cce_dir_trace_p = 0
@@ -40,7 +34,7 @@ module testbench
 
    // LCE Trace Replay Width
    , localparam lce_opcode_width_lp=$bits(bp_me_nonsynth_lce_opcode_e)
-   , localparam tr_ring_width_lp=`bp_me_nonsynth_lce_tr_pkt_width(paddr_width_p, dword_width_p)
+   , localparam tr_ring_width_lp=`bp_me_nonsynth_lce_tr_pkt_width(paddr_width_p, dword_width_gp)
    , localparam tr_rom_addr_width_p = 20
 
    )
@@ -61,10 +55,10 @@ function int get_sim_period();
   return (`BP_SIM_CLK_PERIOD);
 endfunction
 
-`declare_bp_cfg_bus_s(vaddr_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p, cce_pc_width_p, cce_instr_width_p);
+`declare_bp_cfg_bus_s(domain_width_p, core_id_width_p, cce_id_width_p, lce_id_width_p);
 `declare_bp_bedrock_lce_if(paddr_width_p, cce_block_width_p, lce_id_width_p, cce_id_width_p, lce_assoc_p, lce);
 `declare_bp_bedrock_mem_if(paddr_width_p, cce_block_width_p, lce_id_width_p, lce_assoc_p, cce);
-`declare_bp_bedrock_mem_if(paddr_width_p, dword_width_p, lce_id_width_p, lce_assoc_p, xce);
+`declare_bp_bedrock_mem_if(paddr_width_p, dword_width_gp, lce_id_width_p, lce_assoc_p, xce);
 
 // CFG IF
 bp_cfg_bus_s             cfg_bus_lo;
@@ -72,7 +66,7 @@ bp_bedrock_cce_mem_msg_s cfg_mem_cmd_lo;
 bp_bedrock_xce_mem_msg_s cfg_mem_cmd;
 logic                    cfg_mem_cmd_v_lo, cfg_mem_cmd_ready_and_li;
 assign cfg_mem_cmd = '{header: cfg_mem_cmd_lo.header
-                      ,data: cfg_mem_cmd_lo.data[0+:dword_width_p]
+                      ,data: cfg_mem_cmd_lo.data[0+:dword_width_gp]
                       };
 
 // CCE-MEM IF
@@ -285,7 +279,7 @@ bind bp_cce_dir
 
 
 bsg_two_fifo
-#(.width_p(lce_req_msg_width_lp)
+#(.width_p($bits(bp_bedrock_lce_req_msg_s))
   )
 lce_req_buffer
  (.clk_i(clk_i)
@@ -301,7 +295,7 @@ lce_req_buffer
   );
 
 bsg_two_fifo
-#(.width_p(lce_resp_msg_width_lp)
+#(.width_p($bits(bp_bedrock_lce_resp_msg_s))
   )
 lce_resp_buffer
  (.clk_i(clk_i)
@@ -317,7 +311,7 @@ lce_resp_buffer
   );
 
 bsg_two_fifo
-#(.width_p(lce_cmd_msg_width_lp)
+#(.width_p($bits(bp_bedrock_lce_cmd_msg_s))
   )
 lce_cmd_buffer
  (.clk_i(clk_i)
@@ -335,8 +329,8 @@ lce_cmd_buffer
 logic cce_ucode_v_li;
 logic cce_ucode_w_li;
 logic [cce_pc_width_p-1:0] cce_ucode_addr_li;
-logic [cce_instr_width_p-1:0] cce_ucode_data_li;
-logic [cce_instr_width_p-1:0] cce_ucode_data_lo;
+logic [cce_instr_width_gp-1:0] cce_ucode_data_li;
+logic [cce_instr_width_gp-1:0] cce_ucode_data_lo;
 
 logic lce_req_header_v, lce_req_header_ready_and;
 logic lce_req_data_v, lce_req_data_ready_and;
@@ -516,11 +510,31 @@ bp_burst_to_lite
    ,.out_msg_ready_and_i(mem_cmd_ready_and)
    );
 
+// Memory Command Buffer
+bp_bedrock_cce_mem_msg_s mem_cmd_lo;
+logic                    mem_cmd_v_lo, mem_cmd_ready_lo;
+bsg_fifo_1r1w_small
+#(.width_p($bits(bp_bedrock_cce_mem_msg_s))
+  ,.els_p(mem_buffer_els_lp)
+  )
+mem_cmd_buffer
+ (.clk_i(clk_i)
+  ,.reset_i(reset_i)
+  // from CCE
+  ,.v_i(mem_cmd_v)
+  ,.data_i(mem_cmd)
+  ,.ready_o(mem_cmd_ready)
+  // to memory
+  ,.v_o(mem_cmd_v_lo)
+  ,.data_o(mem_cmd_lo)
+  ,.yumi_i(mem_cmd_ready_lo & mem_cmd_v_lo)
+  );
+
 // Memory Response Buffer
 bp_bedrock_cce_mem_msg_s mem_resp_lo;
 logic                    mem_resp_v_lo, mem_resp_ready_lo;
 bsg_fifo_1r1w_small
-#(.width_p(cce_mem_msg_width_lp)
+#(.width_p($bits(bp_bedrock_cce_mem_msg_s))
   ,.els_p(mem_buffer_els_lp)
   )
 mem_resp_buffer

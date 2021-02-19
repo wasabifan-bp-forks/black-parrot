@@ -12,6 +12,9 @@
  *
  */
 
+`include "bp_common_defines.svh"
+`include "bp_me_defines.svh"
+
 module bp_cce_inst_stall
   import bp_me_pkg::*;
   #()
@@ -47,8 +50,8 @@ module bp_cce_inst_stall
    , output logic                                stall_o
   );
 
-  wire [`bp_cce_num_src_q-1:0] wfq_v_vec = {lce_req_header_v_i, lce_resp_header_v_i, mem_resp_header_v_i, pending_v_i};
-  wire [`bp_cce_num_src_q-1:0] wfq_mask = decoded_inst_i.imm[0+:`bp_cce_num_src_q];
+  wire [$bits(bp_cce_inst_src_q_e)-1:0] wfq_v_vec = {lce_req_header_v_i, lce_resp_header_v_i, mem_resp_header_v_i, pending_v_i};
+  wire [$bits(bp_cce_inst_src_q_e)-1:0] wfq_mask = decoded_inst_i.imm[0+:$bits(bp_cce_inst_src_q_e)];
 
   always_comb begin
     stall_o = 1'b0;
