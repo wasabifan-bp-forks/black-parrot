@@ -39,21 +39,21 @@ module bp_me_nonsynth_cce_tracer
    , input [lce_req_msg_header_width_lp-1:0]        lce_req_header_i
    , input                                          lce_req_header_v_i
    , input                                          lce_req_header_ready_and_i
-   , input [dword_width_p-1:0]                      lce_req_data_i
+   , input [dword_width_gp-1:0]                     lce_req_data_i
    , input                                          lce_req_data_v_i
    , input                                          lce_req_data_ready_and_i
 
    , input [lce_resp_msg_header_width_lp-1:0]       lce_resp_header_i
    , input                                          lce_resp_header_v_i
    , input                                          lce_resp_header_ready_and_i
-   , input [dword_width_p-1:0]                      lce_resp_data_i
+   , input [dword_width_gp-1:0]                     lce_resp_data_i
    , input                                          lce_resp_data_v_i
    , input                                          lce_resp_data_ready_and_i
 
    , input [lce_cmd_msg_header_width_lp-1:0]        lce_cmd_header_i
    , input                                          lce_cmd_header_v_i
    , input                                          lce_cmd_header_ready_and_i
-   , input [dword_width_p-1:0]                      lce_cmd_data_i
+   , input [dword_width_gp-1:0]                     lce_cmd_data_i
    , input                                          lce_cmd_data_v_i
    , input                                          lce_cmd_data_ready_and_i
 
@@ -62,14 +62,14 @@ module bp_me_nonsynth_cce_tracer
    , input [cce_mem_msg_header_width_lp-1:0]        mem_resp_header_i
    , input                                          mem_resp_header_v_i
    , input                                          mem_resp_header_ready_and_i
-   , input [dword_width_p-1:0]                      mem_resp_data_i
+   , input [dword_width_gp-1:0]                     mem_resp_data_i
    , input                                          mem_resp_data_v_i
    , input                                          mem_resp_data_ready_and_i
 
    , input [cce_mem_msg_header_width_lp-1:0]        mem_cmd_header_i
    , input                                          mem_cmd_header_v_i
    , input                                          mem_cmd_header_ready_and_i
-   , input [dword_width_p-1:0]                      mem_cmd_data_i
+   , input [dword_width_gp-1:0]                     mem_cmd_data_i
    , input                                          mem_cmd_data_v_i
    , input                                          mem_cmd_data_ready_and_i
 

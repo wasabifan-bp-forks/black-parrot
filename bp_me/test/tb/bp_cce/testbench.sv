@@ -37,6 +37,8 @@ module testbench
    , localparam tr_ring_width_lp=`bp_me_nonsynth_lce_tr_pkt_width(paddr_width_p, dword_width_gp)
    , localparam tr_rom_addr_width_p = 20
 
+   `declare_bp_bedrock_lce_if_widths(paddr_width_p, cce_block_width_p, lce_id_width_p, cce_id_width_p, lce_assoc_p, lce)
+   `declare_bp_bedrock_mem_if_widths(paddr_width_p, cce_block_width_p, lce_id_width_p, lce_assoc_p, cce)
    )
   (input clk_i
    , input reset_i
@@ -342,7 +344,7 @@ logic mem_resp_header_v, mem_resp_header_ready_and;
 logic mem_resp_data_v, mem_resp_data_ready_and;
 logic mem_cmd_header_v, mem_cmd_header_ready_and;
 logic mem_cmd_data_v, mem_cmd_data_ready_and;
-logic [dword_width_p-1:0] lce_req_data, lce_resp_data, lce_cmd_data, mem_cmd_data, mem_resp_data;
+logic [dword_width_gp-1:0] lce_req_data, lce_resp_data, lce_cmd_data, mem_cmd_data, mem_resp_data;
 bp_bedrock_cce_mem_msg_header_s mem_resp_header, mem_cmd_header;
 bp_bedrock_lce_req_msg_header_s lce_req_header;
 bp_bedrock_lce_resp_msg_header_s lce_resp_header;
@@ -354,7 +356,7 @@ assign lce_req_yumi = lce_req_v & lce_req_ready;
 bp_lite_to_burst
  #(.bp_params_p(bp_params_p)
    ,.in_data_width_p(cce_block_width_p)
-   ,.out_data_width_p(dword_width_p)
+   ,.out_data_width_p(dword_width_gp)
    ,.payload_width_p(lce_req_payload_width_lp)
    ,.payload_mask_p(lce_req_payload_mask_gp)
    )
@@ -381,7 +383,7 @@ assign lce_resp_yumi = lce_resp_v & lce_resp_ready;
 bp_lite_to_burst
  #(.bp_params_p(bp_params_p)
    ,.in_data_width_p(cce_block_width_p)
-   ,.out_data_width_p(dword_width_p)
+   ,.out_data_width_p(dword_width_gp)
    ,.payload_width_p(lce_resp_payload_width_lp)
    ,.payload_mask_p(lce_resp_payload_mask_gp)
    )
@@ -405,7 +407,7 @@ bp_lite_to_burst
 // LCE Command
 bp_burst_to_lite
  #(.bp_params_p(bp_params_p)
-   ,.in_data_width_p(dword_width_p)
+   ,.in_data_width_p(dword_width_gp)
    ,.out_data_width_p(cce_block_width_p)
    ,.payload_width_p(lce_cmd_payload_width_lp)
    ,.payload_mask_p(lce_cmd_payload_mask_gp)
@@ -488,7 +490,7 @@ wrapper
 // MEM Command
 bp_burst_to_lite
  #(.bp_params_p(bp_params_p)
-   ,.in_data_width_p(dword_width_p)
+   ,.in_data_width_p(dword_width_gp)
    ,.out_data_width_p(cce_block_width_p)
    ,.payload_width_p(cce_mem_payload_width_lp)
    ,.payload_mask_p(mem_cmd_payload_mask_gp)
@@ -556,7 +558,7 @@ assign mem_resp_yumi = mem_resp_v & mem_resp_ready_and;
 bp_lite_to_burst
  #(.bp_params_p(bp_params_p)
    ,.in_data_width_p(cce_block_width_p)
-   ,.out_data_width_p(dword_width_p)
+   ,.out_data_width_p(dword_width_gp)
    ,.payload_width_p(cce_mem_payload_width_lp)
    ,.payload_mask_p(mem_resp_payload_mask_gp)
    )

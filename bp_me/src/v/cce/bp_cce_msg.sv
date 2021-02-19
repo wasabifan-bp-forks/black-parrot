@@ -38,11 +38,11 @@ module bp_cce_msg
     `declare_bp_bedrock_lce_if_widths(paddr_width_p, cce_block_width_p, lce_id_width_p, cce_id_width_p, lce_assoc_p, lce)
     `declare_bp_bedrock_mem_if_widths(paddr_width_p, cce_block_width_p, lce_id_width_p, lce_assoc_p, cce)
 
-    , localparam burst_packets_128_lp = (((8*128) / dword_width_p) - 1)
-    , localparam burst_packets_64_lp = (((8*64) / dword_width_p) - 1)
-    , localparam burst_packets_32_lp = (((8*32) / dword_width_p) - 1)
-    , localparam burst_packets_16_lp = (((8*16) / dword_width_p) - 1)
-    , localparam burst_packets_8_lp = (((8*8) / dword_width_p) - 1)
+    , localparam burst_packets_128_lp = (((8*128) / dword_width_gp) - 1)
+    , localparam burst_packets_64_lp = (((8*64) / dword_width_gp) - 1)
+    , localparam burst_packets_32_lp = (((8*32) / dword_width_gp) - 1)
+    , localparam burst_packets_16_lp = (((8*16) / dword_width_gp) - 1)
+    , localparam burst_packets_8_lp = (((8*8) / dword_width_gp) - 1)
   )
   (input                                            clk_i
    , input                                          reset_i
@@ -56,21 +56,21 @@ module bp_cce_msg
    , input [lce_req_msg_header_width_lp-1:0]        lce_req_header_i
    , input                                          lce_req_header_v_i
    , output logic                                   lce_req_header_yumi_o
-   , input [dword_width_p-1:0]                      lce_req_data_i
+   , input [dword_width_gp-1:0]                     lce_req_data_i
    , input                                          lce_req_data_v_i
    , output logic                                   lce_req_data_ready_and_o
 
    , input [lce_resp_msg_header_width_lp-1:0]       lce_resp_header_i
    , input                                          lce_resp_header_v_i
    , output logic                                   lce_resp_header_yumi_o
-   , input [dword_width_p-1:0]                      lce_resp_data_i
+   , input [dword_width_gp-1:0]                     lce_resp_data_i
    , input                                          lce_resp_data_v_i
    , output logic                                   lce_resp_data_ready_and_o
 
    , output logic [lce_cmd_msg_header_width_lp-1:0] lce_cmd_header_o
    , output logic                                   lce_cmd_header_v_o
    , input                                          lce_cmd_header_ready_and_i
-   , output logic [dword_width_p-1:0]               lce_cmd_data_o
+   , output logic [dword_width_gp-1:0]              lce_cmd_data_o
    , output logic                                   lce_cmd_data_v_o
    , input                                          lce_cmd_data_ready_and_i
 
@@ -80,14 +80,14 @@ module bp_cce_msg
    , input [cce_mem_msg_header_width_lp-1:0]        mem_resp_header_i
    , input                                          mem_resp_header_v_i
    , output logic                                   mem_resp_header_yumi_o
-   , input [dword_width_p-1:0]                      mem_resp_data_i
+   , input [dword_width_gp-1:0]                     mem_resp_data_i
    , input                                          mem_resp_data_v_i
    , output logic                                   mem_resp_data_ready_and_o
 
    , output logic [cce_mem_msg_header_width_lp-1:0] mem_cmd_header_o
    , output logic                                   mem_cmd_header_v_o
    , input                                          mem_cmd_header_ready_and_i
-   , output logic [dword_width_p-1:0]               mem_cmd_data_o
+   , output logic [dword_width_gp-1:0]              mem_cmd_data_o
    , output logic                                   mem_cmd_data_v_o
    , input                                          mem_cmd_data_ready_and_i
 

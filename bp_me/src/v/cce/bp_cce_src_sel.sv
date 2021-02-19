@@ -64,9 +64,9 @@ module bp_cce_src_sel
    , input [lce_resp_msg_header_width_lp-1:0]                       lce_resp_i
    , input [cce_mem_msg_header_width_lp-1:0]                        mem_resp_i
    // TODO: data inputs are not guarded by valid
-   , input [dword_width_p-1:0]                                      lce_req_data_i
-   , input [dword_width_p-1:0]                                      lce_resp_data_i
-   , input [dword_width_p-1:0]                                      mem_resp_data_i
+   , input [dword_width_gp-1:0]                                     lce_req_data_i
+   , input [dword_width_gp-1:0]                                     lce_resp_data_i
+   , input [dword_width_gp-1:0]                                     mem_resp_data_i
 
    // Source A and B outputs
    , output logic [`bp_cce_inst_gpr_width-1:0]   src_a_o

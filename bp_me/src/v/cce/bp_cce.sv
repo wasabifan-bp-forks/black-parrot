@@ -40,32 +40,32 @@ module bp_cce
    , input [cfg_bus_width_lp-1:0]                   cfg_bus_i
 
    // ucode programming interface, synchronous read, direct connection to RAM
-   , input                                             ucode_v_i
-   , input                                             ucode_w_i
-   , input [cce_pc_width_p-1:0]                        ucode_addr_i
-   , input [cce_instr_width_gp-1:0]                     ucode_data_i
-   , output [cce_instr_width_gp-1:0]                    ucode_data_o
+   , input                                          ucode_v_i
+   , input                                          ucode_w_i
+   , input [cce_pc_width_p-1:0]                     ucode_addr_i
+   , input [cce_instr_width_gp-1:0]                 ucode_data_i
+   , output [cce_instr_width_gp-1:0]                ucode_data_o
 
    // LCE-CCE Interface
    // BP Burst protocol: ready&valid
    , input [lce_req_msg_header_width_lp-1:0]        lce_req_header_i
    , input                                          lce_req_header_v_i
    , output logic                                   lce_req_header_ready_and_o
-   , input [dword_width_p-1:0]                      lce_req_data_i
+   , input [dword_width_gp-1:0]                     lce_req_data_i
    , input                                          lce_req_data_v_i
    , output logic                                   lce_req_data_ready_and_o
 
    , input [lce_resp_msg_header_width_lp-1:0]       lce_resp_header_i
    , input                                          lce_resp_header_v_i
    , output logic                                   lce_resp_header_ready_and_o
-   , input [dword_width_p-1:0]                      lce_resp_data_i
+   , input [dword_width_gp-1:0]                     lce_resp_data_i
    , input                                          lce_resp_data_v_i
    , output logic                                   lce_resp_data_ready_and_o
 
    , output logic [lce_cmd_msg_header_width_lp-1:0] lce_cmd_header_o
    , output logic                                   lce_cmd_header_v_o
    , input                                          lce_cmd_header_ready_and_i
-   , output logic [dword_width_p-1:0]               lce_cmd_data_o
+   , output logic [dword_width_gp-1:0]              lce_cmd_data_o
    , output logic                                   lce_cmd_data_v_o
    , input                                          lce_cmd_data_ready_and_i
 
@@ -74,14 +74,14 @@ module bp_cce
    , input [cce_mem_msg_header_width_lp-1:0]        mem_resp_header_i
    , input                                          mem_resp_header_v_i
    , output logic                                   mem_resp_header_ready_and_o
-   , input [dword_width_p-1:0]                      mem_resp_data_i
+   , input [dword_width_gp-1:0]                     mem_resp_data_i
    , input                                          mem_resp_data_v_i
    , output logic                                   mem_resp_data_ready_and_o
 
    , output logic [cce_mem_msg_header_width_lp-1:0] mem_cmd_header_o
    , output logic                                   mem_cmd_header_v_o
    , input                                          mem_cmd_header_ready_and_i
-   , output logic [dword_width_p-1:0]               mem_cmd_data_o
+   , output logic [dword_width_gp-1:0]              mem_cmd_data_o
    , output logic                                   mem_cmd_data_v_o
    , input                                          mem_cmd_data_ready_and_i
   );

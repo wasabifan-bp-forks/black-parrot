@@ -77,7 +77,7 @@ module bp_l2e_tile
   bp_bedrock_lce_req_msg_header_s cce_lce_req_header;
   bp_bedrock_lce_resp_msg_header_s cce_lce_resp_header;
   bp_bedrock_lce_cmd_msg_header_s cce_lce_cmd_header;
-  logic [dword_width_p-1:0] cce_lce_req_data, cce_lce_resp_data, cce_lce_cmd_data;
+  logic [dword_width_gp-1:0] cce_lce_req_data, cce_lce_resp_data, cce_lce_cmd_data;
 
   // Mem connections
 
@@ -87,7 +87,7 @@ module bp_l2e_tile
   logic cce_mem_cmd_header_v, cce_mem_cmd_header_ready;
   logic cce_mem_cmd_data_v, cce_mem_cmd_data_ready;
   bp_bedrock_cce_mem_msg_header_s cce_mem_resp_header, cce_mem_cmd_header;
-  logic [dword_width_p-1:0] cce_mem_cmd_data, cce_mem_resp_data;
+  logic [dword_width_gp-1:0] cce_mem_cmd_data, cce_mem_resp_data;
 
   // to/from Burst-Lite converters
   bp_bedrock_cce_mem_msg_s cce_mem_cmd_lo;
@@ -240,7 +240,7 @@ module bp_l2e_tile
   logic [pr_len_width_lp-1:0] cce_lce_req_pr_len;
   bp_bedrock_size_to_len
    #(.width_p(pr_len_width_lp)
-     ,.flit_width_p(dword_width_p)
+     ,.flit_width_p(dword_width_gp)
      )
    cce_lce_req_size_to_len
    (.size_i(cce_lce_req_header.size)
@@ -252,7 +252,7 @@ module bp_l2e_tile
      ,.cord_width_p(coh_noc_cord_width_p)
      ,.len_width_p(coh_noc_len_width_p)
      ,.pr_hdr_width_p(lce_req_msg_header_width_lp)
-     ,.pr_data_width_p(dword_width_p)
+     ,.pr_data_width_p(dword_width_gp)
      ,.pr_len_width_p(pr_len_width_lp)
      ,.hdr_width_p(coh_noc_flit_width_p)
      )
@@ -288,7 +288,7 @@ module bp_l2e_tile
   logic [pr_len_width_lp-1:0] cce_lce_cmd_pr_len;
   bp_bedrock_size_to_len
    #(.width_p(pr_len_width_lp)
-     ,.flit_width_p(dword_width_p)
+     ,.flit_width_p(dword_width_gp)
      )
    cce_lce_cmd_size_to_len
    (.size_i(cce_lce_cmd_header.size)
@@ -300,7 +300,7 @@ module bp_l2e_tile
      ,.cord_width_p(coh_noc_cord_width_p)
      ,.len_width_p(coh_noc_len_width_p)
      ,.pr_hdr_width_p(lce_cmd_msg_header_width_lp)
-     ,.pr_data_width_p(dword_width_p)
+     ,.pr_data_width_p(dword_width_gp)
      ,.pr_len_width_p(pr_len_width_lp)
      ,.hdr_width_p(coh_noc_flit_width_p)
      )
@@ -331,7 +331,7 @@ module bp_l2e_tile
   logic [pr_len_width_lp-1:0] cce_lce_resp_pr_len;
   bp_bedrock_size_to_len
    #(.width_p(pr_len_width_lp)
-     ,.flit_width_p(dword_width_p)
+     ,.flit_width_p(dword_width_gp)
      )
    cce_lce_resp_size_to_len
    (.size_i(cce_lce_resp_header.size)
@@ -343,7 +343,7 @@ module bp_l2e_tile
      ,.cord_width_p(coh_noc_cord_width_p)
      ,.len_width_p(coh_noc_len_width_p)
      ,.pr_hdr_width_p(lce_resp_msg_header_width_lp)
-     ,.pr_data_width_p(dword_width_p)
+     ,.pr_data_width_p(dword_width_gp)
      ,.pr_len_width_p(pr_len_width_lp)
      ,.hdr_width_p(coh_noc_flit_width_p)
      )
@@ -369,7 +369,7 @@ module bp_l2e_tile
   logic cce_mem_cmd_v_and_lo;
   bp_burst_to_lite
    #(.bp_params_p(bp_params_p)
-     ,.in_data_width_p(dword_width_p)
+     ,.in_data_width_p(dword_width_gp)
      ,.out_data_width_p(cce_block_width_p)
      ,.payload_width_p(cce_mem_payload_width_lp)
      ,.payload_mask_p(mem_cmd_payload_mask_gp)
@@ -398,7 +398,7 @@ module bp_l2e_tile
   bp_lite_to_burst
    #(.bp_params_p(bp_params_p)
      ,.in_data_width_p(cce_block_width_p)
-     ,.out_data_width_p(dword_width_p)
+     ,.out_data_width_p(dword_width_gp)
      ,.payload_width_p(cce_mem_payload_width_lp)
      ,.payload_mask_p(mem_resp_payload_mask_gp)
      )

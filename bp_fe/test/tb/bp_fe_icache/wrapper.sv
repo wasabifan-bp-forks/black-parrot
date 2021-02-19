@@ -222,7 +222,7 @@ module wrapper
     bp_bedrock_lce_req_msg_header_s cce_lce_req_header;
     bp_bedrock_lce_resp_msg_header_s cce_lce_resp_header;
     bp_bedrock_lce_cmd_msg_header_s cce_lce_cmd_header;
-    logic [dword_width_p-1:0] cce_lce_req_data, cce_lce_resp_data, cce_lce_cmd_data;
+    logic [dword_width_gp-1:0] cce_lce_req_data, cce_lce_resp_data, cce_lce_cmd_data;
 
     // CCE-LCE connections - BP Lite - to/from LCE
     logic lce_req_v_lo, lce_req_ready_li;
@@ -241,7 +241,7 @@ module wrapper
     logic cce_mem_cmd_header_v, cce_mem_cmd_header_ready_and;
     logic cce_mem_cmd_data_v, cce_mem_cmd_data_ready_and;
     bp_bedrock_cce_mem_msg_header_s cce_mem_resp_header, cce_mem_cmd_header;
-    logic [dword_width_p-1:0] cce_mem_cmd_data, cce_mem_resp_data;
+    logic [dword_width_gp-1:0] cce_mem_cmd_data, cce_mem_resp_data;
 
     // CCE-Mem connections - BP Lite - to/from ports
     bp_bedrock_cce_mem_msg_s mem_cmd_lo;
@@ -315,7 +315,7 @@ module wrapper
     bp_lite_to_burst
      #(.bp_params_p(bp_params_p)
        ,.in_data_width_p(cce_block_width_p)
-       ,.out_data_width_p(dword_width_p)
+       ,.out_data_width_p(dword_width_gp)
        ,.payload_width_p(lce_req_payload_width_lp)
        ,.payload_mask_p(lce_req_payload_mask_gp)
        )
@@ -340,7 +340,7 @@ module wrapper
     bp_lite_to_burst
      #(.bp_params_p(bp_params_p)
        ,.in_data_width_p(cce_block_width_p)
-       ,.out_data_width_p(dword_width_p)
+       ,.out_data_width_p(dword_width_gp)
        ,.payload_width_p(lce_resp_payload_width_lp)
        ,.payload_mask_p(lce_resp_payload_mask_gp)
        )
@@ -364,7 +364,7 @@ module wrapper
     // LCE Command
     bp_burst_to_lite
      #(.bp_params_p(bp_params_p)
-       ,.in_data_width_p(dword_width_p)
+       ,.in_data_width_p(dword_width_gp)
        ,.out_data_width_p(cce_block_width_p)
        ,.payload_width_p(lce_cmd_payload_width_lp)
        ,.payload_mask_p(lce_cmd_payload_mask_gp)
@@ -455,7 +455,7 @@ module wrapper
     // Mem Command
     bp_burst_to_lite
      #(.bp_params_p(bp_params_p)
-       ,.in_data_width_p(dword_width_p)
+       ,.in_data_width_p(dword_width_gp)
        ,.out_data_width_p(cce_block_width_p)
        ,.payload_width_p(cce_mem_payload_width_lp)
        ,.payload_mask_p(mem_cmd_payload_mask_gp)
@@ -482,7 +482,7 @@ module wrapper
     bp_lite_to_burst
      #(.bp_params_p(bp_params_p)
        ,.in_data_width_p(cce_block_width_p)
-       ,.out_data_width_p(dword_width_p)
+       ,.out_data_width_p(dword_width_gp)
        ,.payload_width_p(cce_mem_payload_width_lp)
        ,.payload_mask_p(mem_resp_payload_mask_gp)
        )
