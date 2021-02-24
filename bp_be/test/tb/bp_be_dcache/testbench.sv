@@ -224,30 +224,30 @@ module testbench
 
   // Memory
   bp_mem
-    #(.bp_params_p(bp_params_p)
-      ,.mem_offset_p(mem_offset_p)
-      ,.mem_load_p(0)
-      ,.mem_file_p(mem_file_p)
-      ,.mem_cap_in_bytes_p(mem_cap_in_bytes_p)
-      ,.use_ddr_p(0)
-      ,.use_dramsim3_p(0)
-      ,.dram_fixed_latency_p(dram_fixed_latency_p)
-      )
-    mem
-     (.clk_i(clk_i)
-      ,.reset_i(reset_i)
+   #(.bp_params_p(bp_params_p)
+     ,.mem_offset_p(mem_offset_p)
+     ,.mem_load_p(0)
+     ,.mem_file_p(mem_file_p)
+     ,.mem_cap_in_bytes_p(mem_cap_in_bytes_p)
+     ,.use_ddr_p(0)
+     ,.use_dramsim3_p(0)
+     ,.dram_fixed_latency_p(dram_fixed_latency_p)
+     )
+   mem
+    (.clk_i(clk_i)
+     ,.reset_i(reset_i)
 
-      ,.mem_cmd_i(mem_cmd_lo)
-      ,.mem_cmd_v_i(mem_cmd_v_lo)
-      ,.mem_cmd_ready_and_o(mem_cmd_ready_lo)
+     ,.mem_cmd_i(mem_cmd_lo)
+     ,.mem_cmd_v_i(mem_cmd_v_lo)
+     ,.mem_cmd_ready_and_o(mem_cmd_ready_lo)
 
-      ,.mem_resp_o(mem_resp_lo)
-      ,.mem_resp_v_o(mem_resp_v_lo)
-      ,.mem_resp_yumi_i(mem_resp_yumi_lo)
+     ,.mem_resp_o(mem_resp_lo)
+     ,.mem_resp_v_o(mem_resp_v_lo)
+     ,.mem_resp_yumi_i(mem_resp_yumi_lo)
 
-      ,.dram_clk_i(dram_clk_i)
-      ,.dram_reset_i(dram_reset_i)
-      );
+     ,.dram_clk_i(dram_clk_i)
+     ,.dram_reset_i(dram_reset_i)
+     );
 
   // Tracers
   bind bp_be_dcache
