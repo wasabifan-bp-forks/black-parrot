@@ -25,12 +25,14 @@
     logic byte_op;
     logic fencei_op;
     logic l2_op;
+    logic no_return;
   }  bp_be_dcache_pipeline_s;
 
   typedef struct packed
   {
     bp_be_dcache_fu_op_e opcode;
     logic [page_offset_width_gp-1:0] page_offset;
+    logic no_amo_return;
     logic [dpath_width_gp-1:0] data;
   }  bp_be_dcache_pkt_s;
 

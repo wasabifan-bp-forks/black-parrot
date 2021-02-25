@@ -82,6 +82,7 @@ module bp_me_cache_slice
      ,.block_size_in_words_p(cce_block_width_p/dword_width_gp)
      ,.sets_p(l2_sets_p)
      ,.ways_p(l2_assoc_p)
+     ,.amo_support_p(amo_support_level_arithmetic_lp)
      )
    cache
     (.clk_i(clk_i)
@@ -125,10 +126,10 @@ module bp_me_cache_slice
 
   `declare_bp_bedrock_mem_if(paddr_width_p, cce_block_width_p, lce_id_width_p, lce_assoc_p, cce);
   `bp_cast_o(bp_bedrock_cce_mem_msg_header_s, mem_cmd_header);
-  assign mem_cmd_header_cast_o = '{msg_type : dma_pkt_lo.write_not_read ? e_bedrock_mem_wr : e_bedrock_mem_rd
-                                   ,size    : mem_cmd_block_size
-                                   ,addr    : dma_pkt_lo.addr
-                                   ,payload : '0
+  assign mem_cmd_header_cast_o = '{msg_type       : dma_pkt_lo.write_not_read ? e_bedrock_mem_wr : e_bedrock_mem_rd
+                                   ,size          : mem_cmd_block_size
+                                   ,addr          : dma_pkt_lo.addr
+                                   ,payload       : '0
                                    };
   assign mem_cmd_header_v_o = dma_pkt_v_lo;
   assign dma_pkt_yumi_li = mem_cmd_header_yumi_i;

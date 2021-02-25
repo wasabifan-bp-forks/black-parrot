@@ -380,10 +380,11 @@ module bp_fe_icache
 
   assign cache_req_v_o = |{uncached_req, cached_req, fencei_req} & ~poison_tv_i;
   assign cache_req_cast_o =
-   '{addr     : paddr_tv_r
-     ,size    : cached_req ? block_req_size : uncached_req_size
-     ,msg_type: cached_req ? e_miss_load : uncached_req ? e_uc_load : e_cache_clear
-     ,data    : '0
+   '{addr       : paddr_tv_r
+     ,size      : cached_req ? block_req_size : uncached_req_size
+     ,msg_type  : cached_req ? e_miss_load : uncached_req ? e_uc_load : e_cache_clear
+     ,no_return : '0
+     ,data      : '0
      };
 
   // The cache pipeline is designed to always send metadata a cycle after the request
@@ -416,7 +417,8 @@ module bp_fe_icache
      );
 
   // invalid way takes priority over LRU way
-  assign cache_req_metadata_cast_o.repl_way = invalid_exist ? way_invalid_index : lru_encode;
+  assign cache_req_metadata_cast_o.hit_or_repl_way = invalid_exist ? way_invalid_index : lru_encode;
+  assign cache_req_metadata_cast_o.hit_or_repl = '0;
   assign cache_req_metadata_cast_o.dirty = '0;
 
   /////////////////////////////////////////////////////////////////////////////

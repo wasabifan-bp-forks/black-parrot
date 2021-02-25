@@ -79,8 +79,17 @@ module bp_me_wormhole_packet_encode_lce_req
       e_bedrock_req_rd
       ,e_bedrock_req_wr
       ,e_bedrock_req_uc_rd: header_cast_o.wh_hdr.len = coh_noc_len_width_p'(lce_cce_req_req_len_lp);
-      // uncached write (store) has data
-      e_bedrock_req_uc_wr:
+      // uncached write (store) and amo ops has data
+      e_bedrock_req_uc_wr
+      ,e_bedrock_req_amoswap
+      ,e_bedrock_req_amoadd
+      ,e_bedrock_req_amoxor
+      ,e_bedrock_req_amoand
+      ,e_bedrock_req_amoor
+      ,e_bedrock_req_amomin
+      ,e_bedrock_req_amomax
+      ,e_bedrock_req_amominu
+      ,e_bedrock_req_amomaxu:
         unique case (header_cast_i.size)
           e_bedrock_msg_size_1: header_cast_o.wh_hdr.len = coh_noc_len_width_p'(lce_cce_req_data_len_1_lp);
           e_bedrock_msg_size_2: header_cast_o.wh_hdr.len = coh_noc_len_width_p'(lce_cce_req_data_len_2_lp);

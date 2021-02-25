@@ -40,12 +40,24 @@
    */
   typedef enum logic [3:0]
   {
-    e_bedrock_mem_rd       = 4'b0000  // Cache block fetch / load / Get (cached in L2/LLC)
-    ,e_bedrock_mem_wr      = 4'b0001  // Cache block write / writeback / store / Put (cached in L2/LLC)
-    ,e_bedrock_mem_uc_rd   = 4'b0010  // Uncached load (uncached in L2/LLC)
-    ,e_bedrock_mem_uc_wr   = 4'b0011  // Uncached store (uncached in L2/LLC)
-    ,e_bedrock_mem_pre     = 4'b0100  // Pre-fetch block request from CCE, fill into L2/LLC if able
-    // 4'b0101 - 4'b1111 reserved // custom
+    // Basic mandatory support
+    e_bedrock_mem_rd        = 4'b0000  // Cache block fetch / load / Get (cached in L2/LLC)
+    ,e_bedrock_mem_wr       = 4'b0001  // Cache block write / writeback / store / Put (cached in L2/LLC)
+    ,e_bedrock_mem_uc_rd    = 4'b0010  // Uncached load (uncached in L2/LLC)
+    ,e_bedrock_mem_uc_wr    = 4'b0011  // Uncached store (uncached in L2/LLC)
+    ,e_bedrock_mem_pre      = 4'b0100  // Pre-fetch block request from CCE, fill into L2/LLC if able
+    // Atomic support
+    ,e_bedrock_mem_lr       = 4'b0101
+    ,e_bedrock_mem_sc       = 4'b0110
+    ,e_bedrock_mem_amo_swap = 4'b0111
+    ,e_bedrock_mem_amo_add  = 4'b1000
+    ,e_bedrock_mem_amo_xor  = 4'b1001
+    ,e_bedrock_mem_amo_and  = 4'b1010
+    ,e_bedrock_mem_amo_or   = 4'b1011
+    ,e_bedrock_mem_amo_min  = 4'b1100
+    ,e_bedrock_mem_amo_max  = 4'b1101
+    ,e_bedrock_mem_amo_minu = 4'b1110
+    ,e_bedrock_mem_amo_maxu = 4'b1111
   } bp_bedrock_mem_type_e;
 
   /*
@@ -58,7 +70,16 @@
     ,e_bedrock_req_wr        = 4'b0001 // Write-miss
     ,e_bedrock_req_uc_rd     = 4'b0010 // Uncached Read-miss
     ,e_bedrock_req_uc_wr     = 4'b0011 // Uncached Write-miss
-    // 4'b0100 - 4'b1111 reserved / custom
+    ,e_bedrock_req_amoswap   = 4'b0100 // Amoswap op
+    ,e_bedrock_req_amoadd    = 4'b0101 // Amoadd op
+    ,e_bedrock_req_amoxor    = 4'b0110 // Amoxor op
+    ,e_bedrock_req_amoand    = 4'b0111 // Amoand op
+    ,e_bedrock_req_amoor     = 4'b1000 // Amoor op
+    ,e_bedrock_req_amomin    = 4'b1001 // Amomin op
+    ,e_bedrock_req_amomax    = 4'b1010 // Amomax op
+    ,e_bedrock_req_amominu   = 4'b1011 // Amominu op
+    ,e_bedrock_req_amomaxu   = 4'b1100 // Amomaxu op
+    // 4'b1101 - 4'b1111 reserved / custom
   } bp_bedrock_req_type_e;
 
   /*
@@ -80,7 +101,7 @@
     ,e_bedrock_cmd_st_tr           = 4'b1001 // set state and transfer block
     ,e_bedrock_cmd_st_tr_wb        = 4'b1010 // set state, transfer, and writeback block
     ,e_bedrock_cmd_uc_data         = 4'b1011 // uncached data to LCE
-    ,e_bedrock_cmd_uc_st_done      = 4'b1100 // uncached store complete
+    ,e_bedrock_cmd_uc_req_done     = 4'b1100 // uncached req complete message, no data to LCE
     // 4'b1101 - 4'b1111 reserved / custom
   } bp_bedrock_cmd_type_e;
 

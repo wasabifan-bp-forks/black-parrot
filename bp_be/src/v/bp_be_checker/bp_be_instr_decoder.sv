@@ -82,6 +82,7 @@ module bp_be_instr_decoder
       // Decode metadata
       decode.opw_v         = '0;
       decode.ops_v         = '0;
+      decode.no_amo_return = '0;
 
       // Decode control signals
       decode.fu_op         = bp_be_fu_op_s'(0);
@@ -572,17 +573,29 @@ module bp_be_instr_decoder
             // Detect AMO support level
             unique casez (instr)
               `RV64_LRD, `RV64_LRW, `RV64_SCD, `RV64_SCW:
-                illegal_instr = (lr_sc_p == e_none);
+                begin
+                  illegal_instr = (lr_sc_p == e_none);
+                  decode.no_amo_return = ~illegal_instr & (instr.rd_addr == '0);
+                end
               `RV64_AMOSWAPD, `RV64_AMOSWAPW:
-                illegal_instr = (amo_swap_p == e_none);
+                begin
+                  illegal_instr = (amo_swap_p == e_none);
+                  decode.no_amo_return = ~illegal_instr & (instr.rd_addr == '0);
+                end
               `RV64_AMOANDD, `RV64_AMOANDW
               ,`RV64_AMOORD, `RV64_AMOORW
               ,`RV64_AMOXORD, `RV64_AMOXORW:
-                illegal_instr = (amo_fetch_logic_p == e_none);
+                begin
+                  illegal_instr = (amo_fetch_logic_p == e_none);
+                  decode.no_amo_return = ~illegal_instr & (instr.rd_addr == '0);
+                end
               `RV64_AMOADDD, `RV64_AMOADDW
               ,`RV64_AMOMIND, `RV64_AMOMINW, `RV64_AMOMAXD, `RV64_AMOMAXW
               ,`RV64_AMOMINUD, `RV64_AMOMINUW, `RV64_AMOMAXUD, `RV64_AMOMAXUW:
-                illegal_instr = (amo_fetch_arithmetic_p == e_none);
+                begin
+                  illegal_instr = (amo_fetch_arithmetic_p == e_none);
+                  decode.no_amo_return = ~illegal_instr & (instr.rd_addr == '0);
+                end
               default: begin end
             endcase
           end

@@ -93,9 +93,20 @@ module bp_me_wormhole_packet_encode_mem_cmd
     case (header_cast_i.msg_type)
       e_bedrock_mem_rd
       ,e_bedrock_mem_uc_rd
-      ,e_bedrock_mem_pre  : header_cast_o.wh_hdr.len = len_width_p'(mem_cmd_req_len_lp);
+      ,e_bedrock_mem_pre  
+      ,e_bedrock_mem_lr       : header_cast_o.wh_hdr.len = len_width_p'(mem_cmd_req_len_lp);
       e_bedrock_mem_uc_wr
-      ,e_bedrock_mem_wr   : header_cast_o.wh_hdr.len = data_cmd_len_li;
+      ,e_bedrock_mem_wr   
+      ,e_bedrock_mem_sc
+      ,e_bedrock_mem_amo_swap
+      ,e_bedrock_mem_amo_add
+      ,e_bedrock_mem_amo_xor
+      ,e_bedrock_mem_amo_and
+      ,e_bedrock_mem_amo_or
+      ,e_bedrock_mem_amo_min
+      ,e_bedrock_mem_amo_max
+      ,e_bedrock_mem_amo_minu
+      ,e_bedrock_mem_amo_maxu : header_cast_o.wh_hdr.len = data_cmd_len_li;
       default: header_cast_o.wh_hdr.len = '0;
     endcase
   end

@@ -26,7 +26,7 @@ module testbench
    , parameter mem_file_p         = "inv"
    , parameter mem_cap_in_bytes_p = 2**20
    // CCE testing uses any address it wants, no DRAM offset required
-   , parameter mem_offset_p       = '0
+   , parameter mem_offset_p       = (skip_init_p) ? '0 : dram_base_addr_gp
 
    // size of CCE-Memory buffers for cmd/resp messages
    // for this testbench (one LCE, one CCE, one memory) only need enough space to hold as many
