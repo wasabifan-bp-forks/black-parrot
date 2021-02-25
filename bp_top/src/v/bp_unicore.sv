@@ -43,7 +43,7 @@ module bp_unicore
    , output logic                                      mem_cmd_header_v_o
    , input                                             mem_cmd_header_ready_i
 
-   , output logic [dword_width_gp-1:0]                  mem_cmd_data_o
+   , output logic [dword_width_gp-1:0]                 mem_cmd_data_o
    , output logic                                      mem_cmd_data_v_o
    , input                                             mem_cmd_data_ready_i
 
@@ -51,7 +51,7 @@ module bp_unicore
    , input                                             mem_resp_header_v_i
    , output logic                                      mem_resp_header_yumi_o
 
-   , input [dword_width_gp-1:0]                         mem_resp_data_i
+   , input [dword_width_gp-1:0]                        mem_resp_data_i
    , input                                             mem_resp_data_v_i
    , output logic                                      mem_resp_data_yumi_o
    );
