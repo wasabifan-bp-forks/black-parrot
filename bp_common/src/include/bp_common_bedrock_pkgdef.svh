@@ -45,7 +45,7 @@
     ,e_bedrock_mem_uc_rd   = 4'b0010  // Uncached load (uncached in L2/LLC)
     ,e_bedrock_mem_uc_wr   = 4'b0011  // Uncached store (uncached in L2/LLC)
     ,e_bedrock_mem_pre     = 4'b0100  // Pre-fetch block request from CCE, fill into L2/LLC if able
-    ,e_bedrock_mem_amo     = 4'b0101  // Atomic operation in L2/LLC
+    ,e_bedrock_mem_amo     = 4'b0101  // AMO op
     // 4'b0101 - 4'b1111 reserved // custom
   } bp_bedrock_mem_type_e;
 
