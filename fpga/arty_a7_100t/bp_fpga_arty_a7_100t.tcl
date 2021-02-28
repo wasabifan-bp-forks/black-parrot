@@ -111,6 +111,42 @@ proc checkRequiredFiles { origin_dir} {
    "${origin_dir}/../../bp_top/src/v/bp_sacc_vdp.sv" \
    "${origin_dir}/../../bp_top/src/v/bp_unicore.sv" \
    "${origin_dir}/../../bp_top/src/v/bp_sacc_tile.sv" \
+   "${origin_dir}/../../bp_fe/src/include/bp_fe_icache_defines.svh" \
+   "${origin_dir}/../../bp_fe/src/include/bp_fe_icache_pkgdef.svh" \
+   "${origin_dir}/../../bp_fe/src/include/bp_fe_pkg.sv" \
+   "${origin_dir}/../../bp_fe/src/include/bp_fe_defines.svh" \
+   "${origin_dir}/../../bp_fe/src/include/bp_fe_decompress.svh" \
+   "${origin_dir}/../../bp_top/src/include/bp_top_defines.svh" \
+   "${origin_dir}/../../bp_top/src/include/bp_top_pkg.sv" \
+   "${origin_dir}/../../bp_be/src/include/bp_be_defines.svh" \
+   "${origin_dir}/../../bp_be/src/include/bp_be_dcache_defines.svh" \
+   "${origin_dir}/../../bp_be/src/include/bp_be_pkg.sv" \
+   "${origin_dir}/../../bp_be/src/include/bp_be_dcache_pkgdef.svh" \
+   "${origin_dir}/../../bp_be/src/include/bp_be_ctl_pkgdef.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_bedrock_if.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_core_pkgdef.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_rv64_csr_defines.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_cache_engine_if.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_aviary_defines.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_pkg.sv" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_cache_engine_pkgdef.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_rv64_pkgdef.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_rv64_instr_defines.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_cfg_bus_pkgdef.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_defines.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_cfg_bus_defines.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_core_if.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_log_defines.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_aviary_pkgdef.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_bedrock_pkgdef.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_addr_defines.svh" \
+   "${origin_dir}/../../bp_common/src/include/bp_common_addr_pkgdef.svh" \
+   "${origin_dir}/../../bp_me/src/include/bp_me_defines.svh" \
+   "${origin_dir}/../../bp_me/src/include/bp_me_cce_inst_pkgdef.svh" \
+   "${origin_dir}/../../bp_me/src/include/bp_me_cce_defines.svh" \
+   "${origin_dir}/../../bp_me/src/include/bp_me_pkg.sv" \
+   "${origin_dir}/../../bp_me/src/include/bp_me_cce_inst_defines.svh" \
+   "${origin_dir}/../../bp_me/src/include/bp_me_wormhole_defines.svh" \
    "${origin_dir}/../../fpga/arty_a7_100t/arty_a7_100.xdc" \
   ]
   foreach ifile $files {
@@ -219,6 +255,7 @@ set_property -name "platform.board_id" -value "arty-a7-100" -objects $obj
 set_property -name "sim.central_dir" -value "$proj_dir/${_xil_proj_name_}.ip_user_files" -objects $obj
 set_property -name "sim.ip.auto_export_scripts" -value "1" -objects $obj
 set_property -name "simulator_language" -value "Mixed" -objects $obj
+set_property -name "source_mgmt_mode" -value "DisplayOnly" -objects $obj
 
 # Create 'sources_1' fileset (if not found)
 if {[string equal [get_filesets -quiet sources_1] ""]} {
@@ -336,6 +373,42 @@ set files [list \
  [file normalize "${origin_dir}/../../bp_top/src/v/bp_sacc_vdp.sv"] \
  [file normalize "${origin_dir}/../../bp_top/src/v/bp_unicore.sv"] \
  [file normalize "${origin_dir}/../../bp_top/src/v/bp_sacc_tile.sv"] \
+ [file normalize "${origin_dir}/../../bp_fe/src/include/bp_fe_icache_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_fe/src/include/bp_fe_icache_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_fe/src/include/bp_fe_pkg.sv"] \
+ [file normalize "${origin_dir}/../../bp_fe/src/include/bp_fe_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_fe/src/include/bp_fe_decompress.svh"] \
+ [file normalize "${origin_dir}/../../bp_top/src/include/bp_top_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_top/src/include/bp_top_pkg.sv"] \
+ [file normalize "${origin_dir}/../../bp_be/src/include/bp_be_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_be/src/include/bp_be_dcache_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_be/src/include/bp_be_pkg.sv"] \
+ [file normalize "${origin_dir}/../../bp_be/src/include/bp_be_dcache_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_be/src/include/bp_be_ctl_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_bedrock_if.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_core_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_rv64_csr_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_cache_engine_if.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_aviary_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_pkg.sv"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_cache_engine_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_rv64_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_rv64_instr_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_cfg_bus_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_cfg_bus_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_core_if.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_log_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_aviary_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_bedrock_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_addr_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_common/src/include/bp_common_addr_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_me/src/include/bp_me_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_me/src/include/bp_me_cce_inst_pkgdef.svh"] \
+ [file normalize "${origin_dir}/../../bp_me/src/include/bp_me_cce_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_me/src/include/bp_me_pkg.sv"] \
+ [file normalize "${origin_dir}/../../bp_me/src/include/bp_me_cce_inst_defines.svh"] \
+ [file normalize "${origin_dir}/../../bp_me/src/include/bp_me_wormhole_defines.svh"] \
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -879,6 +952,186 @@ set file "$origin_dir/../../bp_top/src/v/bp_sacc_tile.sv"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../bp_fe/src/include/bp_fe_icache_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_fe/src/include/bp_fe_icache_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_fe/src/include/bp_fe_pkg.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../bp_fe/src/include/bp_fe_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_fe/src/include/bp_fe_decompress.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_top/src/include/bp_top_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_top/src/include/bp_top_pkg.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../bp_be/src/include/bp_be_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_be/src/include/bp_be_dcache_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_be/src/include/bp_be_pkg.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../bp_be/src/include/bp_be_dcache_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_be/src/include/bp_be_ctl_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_bedrock_if.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_core_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_rv64_csr_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_cache_engine_if.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_aviary_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_pkg.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_cache_engine_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_rv64_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_rv64_instr_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_cfg_bus_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_cfg_bus_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_core_if.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_log_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_aviary_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_bedrock_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_addr_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_common/src/include/bp_common_addr_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_me/src/include/bp_me_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_me/src/include/bp_me_cce_inst_pkgdef.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_me/src/include/bp_me_cce_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_me/src/include/bp_me_pkg.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../bp_me/src/include/bp_me_cce_inst_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
+
+set file "$origin_dir/../../bp_me/src/include/bp_me_wormhole_defines.svh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
 
 
 # Set 'sources_1' fileset file properties for local files
