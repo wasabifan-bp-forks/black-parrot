@@ -1,0 +1,8 @@
+# Vivado temp files
+vivado*.jou
+vivado.log
+vivado*.str
+.Xil/
+
+# Vivado project (generated from tcl script)
+bp_fpga_arty_a7_100t/
