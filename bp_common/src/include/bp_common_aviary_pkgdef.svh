@@ -3,6 +3,8 @@
 
   `include "bp_common_aviary_defines.svh"
 
+  `include "bsg_defines.v"
+
   // Suitably high enough to not run out of configs.
   localparam max_cfgs    = 128;
   localparam lg_max_cfgs = `BSG_SAFE_CLOG2(max_cfgs);
