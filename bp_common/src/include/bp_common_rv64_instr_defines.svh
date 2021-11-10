@@ -34,25 +34,13 @@
   `define RV64_C1_OP         2'b01
   `define RV64_C2_OP         2'b10
 
-  // Some useful RV64 instruction macros
+  // "casez" pattern definitions for rv64 instruction encodings matching a particular opcode
   `define rv64_r_type(op, funct3, funct7) {``funct7``,{5{1'b?}},{5{1'b?}},``funct3``,{5{1'b?}},``op``}
   `define rv64_i_type(op, funct3)         {{12{1'b?}},{5{1'b?}},``funct3``,{5{1'b?}},``op``}
   `define rv64_s_type(op, funct3)         {{7{1'b?}},{5{1'b?}},{5{1'b?}},``funct3``,{5{1'b?}},``op``}
   `define rv64_b_type(op, funct3)         {{7{1'b?}},{5{1'b?}},{5{1'b?}},``funct3``,{5{1'b?}},``op``}
   `define rv64_u_type(op)                 {{20{1'b?}},{5{1'b?}},``op``}
   `define rv64_fma_type(op, pr2)          {{5{1'b?}},``pr2``,{5{1'b?}},{5{1'b?}},{3{3'b?}},{5{1'b?}},``op``}
-
-  `define rv64_r_type_exp(op, rd, funct3, rs1, rs2, funct7) {``funct7``,``rs2``,``rs1``,``funct3``,``rd``,``op``}
-
-  `define rv64_i_type_exp(op, rd, funct3, rs1, imm) {``imm``[11:0],``rs1``,``funct3``,``rd``,``op``}
-
-  `define rv64_s_type_exp(op, funct3, rs1, rs2, imm) {``imm``[11:5],``rs2``,``rs1``,``funct3``,``imm``[4:0]}
-
-  `define rv64_u_type_exp(op, rd, imm) {``imm``[31:12],``rd``,``op``}
-
-  `define rv64_b_type_exp(op, funct3, rs1, rs2, imm) {``imm``[12],``imm``[10:5],``rs2``,``rs1``,``funct3``,``imm``[4:1],``imm``[11]}
-
-  `define rv64_j_type_exp(op, rd, imm) {``imm``[20],``imm``[10:1],``imm``[11],``imm``[19:12],``rd``,``op``}
 
   `define rv64_cr_type(op, funct4) {``funct4``,{5{1'b?}},{5{1'b?}},``op``}
   `define rv64_ci_type(op, funct3) {``funct3``,{1{1'b?}},{5{1'b?}},{5{1'b?}},``op``}
@@ -65,7 +53,15 @@
   `define rv64_cb2_type(op, funct3, funct2) {``funct3``,{1{1'b?}},``funct2``,{3{1'b?}},{5{1'b?}},``op``}
   `define rv64_cj_type(op, funct3) {``funct3``,{11{1'b?}},``op``}
 
-  // RV64 Immediate sign extension macros
+  // macros to construct a full 32-bit instruction from its constituent fields
+  `define rv64_build_r_type(op, rd, funct3, rs1, rs2, funct7) {``funct7``,``rs2``,``rs1``,``funct3``,``rd``,``op``}
+  `define rv64_build_i_type(op, rd, funct3, rs1, imm) {``imm``[11:0],``rs1``,``funct3``,``rd``,``op``}
+  `define rv64_build_s_type(op, funct3, rs1, rs2, imm) {``imm``[11:5],``rs2``,``rs1``,``funct3``,``imm``[4:0]}
+  `define rv64_build_b_type(op, funct3, rs1, rs2, imm) {``imm``[12],``imm``[10:5],``rs2``,``rs1``,``funct3``,``imm``[4:1],``imm``[11]}
+  `define rv64_build_u_type(op, rd, imm) {``imm``[31:12],``rd``,``op``}
+  `define rv64_build_j_type(op, rd, imm) {``imm``[20],``imm``[10:1],``imm``[11],``imm``[19:12],``rd``,``op``}
+
+  // RV64 Immediate extraction (and sign extension) macros
   `define rv64_signext_i_imm(instr) {{53{``instr``[31]}},``instr``[30:20]}
   `define rv64_signext_s_imm(instr) {{53{``instr``[31]}},``instr[30:25],``instr``[11:7]}
   `define rv64_signext_b_imm(instr) {{52{``instr``[31]}},``instr``[7],``instr``[30:25]  \
@@ -74,6 +70,21 @@
   `define rv64_signext_j_imm(instr) {{44{``instr``[31]}},``instr``[19:12],``instr``[20] \
                                          ,``instr``[30:21], {1'b0}}
   `define rv64_signext_c_imm(instr) {{59{1'b0}},``instr``[19:15]}
+
+  `define rv64_extract_caddi16sp_imm(cinstr)          64'{cinstr[12], cinstr[4:3], cinstr[5], cinstr[2], cinstr[6], 4'b0000}
+  `define rv64_extract_caddi4spn_imm(cinstr)          64'{cinstr[10:7], cinstr[12:11], cinstr[5], cinstr[6], 2'b00}
+  `define rv64_extract_clwsp_cswsp_imm(cinstr)        64'{cinstr_i[3:2], cinstr_i[12], cinstr_i[6:4], 2'b00}
+  `define rv64_extract_cldsp_csdsp_imm(cinstr)        64'{cinstr_i[4:2], cinstr_i[12], cinstr_i[6:5], 3'b000}
+  `define rv64_extract_clw_csw_imm(cinstr)            64'{cinstr_i[5], cinstr_i[12:10], cinstr_i[6], 2'b00}
+  `define rv64_extract_cld_csd_imm(cinstr)            64'{cinstr_i[6:5], cinstr_i[12:10], 3'b000}
+  `define rv64_extract_cj_imm(cinstr)                 64'($signed({cinstr_i[12], cinstr_i[8], cinstr_i[10:9], cinstr_i[6] \
+                                                                  ,cinstr_i[7], cinstr_i[2], cinstr_i[11], cinstr_i[5:3], 1'b0}))
+  `define rv64_extract_cbeqz_cbnez_imm(cinstr)        64'($signed({cinstr_i[12], cinstr_i[6:5], cinstr_i[2] \
+                                                                  ,cinstr_i[11:10], cinstr_i[4:3], 1'b0}))
+  `define rv64_extract_cli_imm(cinstr)                64'($signed({cinstr_i[12], cinstr_i[6:2]}))
+  `define rv64_extract_clui_imm(cinstr)               64'($signed({cinstr_i[12], cinstr_i[6:2], 12'b0}))
+  `define rv64_extract_caddi_caddiw_candi_imm(cinstr) 64'($signed({cinstr_i[12], cinstr_i[6:2]}))
+  `define rv64_extract_cslli_csrli_csrai_imm(cinstr)  64'{cinstr_i[12], cinstr_i[6:2]}
 
   // I extension
   `define RV64_LUI        `rv64_u_type(`RV64_LUI_OP)

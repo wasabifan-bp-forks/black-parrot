@@ -195,6 +195,7 @@ $BP_COMMON_DIR/src/v/bp_pma.sv
 $BP_COMMON_DIR/src/v/bp_tlb.sv
 ## BE files
 $BP_BE_DIR/src/v/bp_be_top.sv
+$BP_BE_DIR/src/v/bp_be_compressed_expander.v
 # Calculator
 $BP_BE_DIR/src/v/bp_be_calculator/bp_be_calculator_top.sv
 $BP_BE_DIR/src/v/bp_be_calculator/bp_be_csr.sv
@@ -224,7 +225,6 @@ $BP_BE_DIR/src/v/bp_be_dcache/bp_be_dcache_wbuf.sv
 ## FE files
 $BP_FE_DIR/src/v/bp_fe_bht.sv
 $BP_FE_DIR/src/v/bp_fe_btb.sv
-$BP_FE_DIR/src/v/bp_fe_expander.v
 $BP_FE_DIR/src/v/bp_fe_icache.sv
 $BP_FE_DIR/src/v/bp_fe_instr_scan.sv
 $BP_FE_DIR/src/v/bp_fe_pc_gen.sv
