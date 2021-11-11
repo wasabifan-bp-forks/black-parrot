@@ -48,13 +48,13 @@ module bp_be_compressed_expander
         `RV64_CLWSP, `RV64_CSWSP:               imm = `rv64_extract_clwsp_cswsp_imm(cinstr_i);
         `RV64_CLDSP, `RV64_CSDSP:               imm = `rv64_extract_cldsp_csdsp_imm(cinstr_i);
         `RV64_CLW, `RV64_CSW:                   imm = `rv64_extract_clw_csw_imm(cinstr_i);
-        `RV64_CLD, `RV64_CSD:                   imm = `rv64_extract_cld_csd_imm(cinstr_1);
-        `RV64_CJ:                               imm = `rv64_extract_cj_imm(cinstr_1);
-        `RV64_CBEQZ, `RV64_CBNEZ:               imm = `rv64_extract_cbeqz_cbnez_imm(cinstr_1);
-        `RV64_CLI:                              imm = `rv64_extract_cli_imm(cinstr_1);
-        `RV64_CLUI:                             imm = `rv64_extract_clui_imm(cinstr_1);
-        `RV64_CADDI, `RV64_CADDIW, `RV64_CANDI: imm = `rv64_extract_caddi_caddiw_candi_imm(cinstr_1);
-        `RV64_CSLLI, `RV64_CSRLI, `RV64_CSRAI:  imm = `rv64_extract_cslli_csrli_csrai_imm(cinstr_1);
+        `RV64_CLD, `RV64_CSD:                   imm = `rv64_extract_cld_csd_imm(cinstr_i);
+        `RV64_CJ:                               imm = `rv64_extract_cj_imm(cinstr_i);
+        `RV64_CBEQZ, `RV64_CBNEZ:               imm = `rv64_extract_cbeqz_cbnez_imm(cinstr_i);
+        `RV64_CLI:                              imm = `rv64_extract_cli_imm(cinstr_i);
+        `RV64_CLUI:                             imm = `rv64_extract_clui_imm(cinstr_i);
+        `RV64_CADDI, `RV64_CADDIW, `RV64_CANDI: imm = `rv64_extract_caddi_caddiw_candi_imm(cinstr_i);
+        `RV64_CSLLI, `RV64_CSRLI, `RV64_CSRAI:  imm = `rv64_extract_cslli_csrli_csrai_imm(cinstr_i);
         default:                                imm = '0;
       endcase
 

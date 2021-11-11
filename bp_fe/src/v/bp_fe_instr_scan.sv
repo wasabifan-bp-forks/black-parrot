@@ -41,7 +41,7 @@ module bp_fe_instr_scan
 
   wire rtype_dest_link   = (instr_cast_rtype_i.rd_addr inside {ra_reg_addr_gp, t0_reg_addr_gp});
   wire rtype_dest_src_eq = (instr_cast_rtype_i.rd_addr == instr_cast_rtype_i.rs1_addr);
-  wire src_link          = jalr_src inside {ra_reg_addr_gp, t0_reg_addr_gp});
+  wire src_link          = jalr_src inside {ra_reg_addr_gp, t0_reg_addr_gp};
 
   always_comb
     begin
@@ -54,7 +54,7 @@ module bp_fe_instr_scan
             `RV64_CBEQZ, `RV64_CBNEZ:
               begin
                 scan_cast_o.branch              = 1'b1;
-                scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cb_imm(instr_i);
+                scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cbeqz_cbnez_imm(instr_i);
               end
             `RV64_CJ:
               begin
@@ -65,7 +65,6 @@ module bp_fe_instr_scan
               begin
                 scan_cast_o.jalr                = 1'b1;
                 scan_cast_o.ret                 = src_link;
-                scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cr_imm(instr_i);
               end
             `RV64_CJALR:
               begin
@@ -76,6 +75,7 @@ module bp_fe_instr_scan
                 // link register).
                 scan_cast_o.ret                = src_link && jalr_src != ra_reg_addr_gp;
               end
+            default: begin /* all other instructions are uninteresting to the frontend */ end
           endcase
         end
       else

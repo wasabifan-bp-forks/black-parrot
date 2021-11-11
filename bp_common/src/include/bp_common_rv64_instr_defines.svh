@@ -71,20 +71,20 @@
                                          ,``instr``[30:21], {1'b0}}
   `define rv64_signext_c_imm(instr) {{59{1'b0}},``instr``[19:15]}
 
-  `define rv64_extract_caddi16sp_imm(cinstr)          64'{cinstr[12], cinstr[4:3], cinstr[5], cinstr[2], cinstr[6], 4'b0000}
-  `define rv64_extract_caddi4spn_imm(cinstr)          64'{cinstr[10:7], cinstr[12:11], cinstr[5], cinstr[6], 2'b00}
-  `define rv64_extract_clwsp_cswsp_imm(cinstr)        64'{cinstr_i[3:2], cinstr_i[12], cinstr_i[6:4], 2'b00}
-  `define rv64_extract_cldsp_csdsp_imm(cinstr)        64'{cinstr_i[4:2], cinstr_i[12], cinstr_i[6:5], 3'b000}
-  `define rv64_extract_clw_csw_imm(cinstr)            64'{cinstr_i[5], cinstr_i[12:10], cinstr_i[6], 2'b00}
-  `define rv64_extract_cld_csd_imm(cinstr)            64'{cinstr_i[6:5], cinstr_i[12:10], 3'b000}
-  `define rv64_extract_cj_imm(cinstr)                 64'($signed({cinstr_i[12], cinstr_i[8], cinstr_i[10:9], cinstr_i[6] \
-                                                                  ,cinstr_i[7], cinstr_i[2], cinstr_i[11], cinstr_i[5:3], 1'b0}))
-  `define rv64_extract_cbeqz_cbnez_imm(cinstr)        64'($signed({cinstr_i[12], cinstr_i[6:5], cinstr_i[2] \
-                                                                  ,cinstr_i[11:10], cinstr_i[4:3], 1'b0}))
-  `define rv64_extract_cli_imm(cinstr)                64'($signed({cinstr_i[12], cinstr_i[6:2]}))
-  `define rv64_extract_clui_imm(cinstr)               64'($signed({cinstr_i[12], cinstr_i[6:2], 12'b0}))
-  `define rv64_extract_caddi_caddiw_candi_imm(cinstr) 64'($signed({cinstr_i[12], cinstr_i[6:2]}))
-  `define rv64_extract_cslli_csrli_csrai_imm(cinstr)  64'{cinstr_i[12], cinstr_i[6:2]}
+  `define rv64_extract_caddi16sp_imm(cinstr)          64'({cinstr[12], cinstr[4:3], cinstr[5], cinstr[2], cinstr[6], 4'b0000})
+  `define rv64_extract_caddi4spn_imm(cinstr)          64'({cinstr[10:7], cinstr[12:11], cinstr[5], cinstr[6], 2'b00})
+  `define rv64_extract_clwsp_cswsp_imm(cinstr)        64'({cinstr[3:2], cinstr[12], cinstr[6:4], 2'b00})
+  `define rv64_extract_cldsp_csdsp_imm(cinstr)        64'({cinstr[4:2], cinstr[12], cinstr[6:5], 3'b000})
+  `define rv64_extract_clw_csw_imm(cinstr)            64'({cinstr[5], cinstr[12:10], cinstr[6], 2'b00})
+  `define rv64_extract_cld_csd_imm(cinstr)            64'({cinstr[6:5], cinstr[12:10], 3'b000})
+  `define rv64_extract_cj_imm(cinstr)                 64'($signed({cinstr[12], cinstr[8], cinstr[10:9], cinstr[6] \
+                                                                  ,cinstr[7], cinstr[2], cinstr[11], cinstr[5:3], 1'b0}))
+  `define rv64_extract_cbeqz_cbnez_imm(cinstr)        64'($signed({cinstr[12], cinstr[6:5], cinstr[2] \
+                                                                  ,cinstr[11:10], cinstr[4:3], 1'b0}))
+  `define rv64_extract_cli_imm(cinstr)                64'($signed({cinstr[12], cinstr[6:2]}))
+  `define rv64_extract_clui_imm(cinstr)               64'($signed({cinstr[12], cinstr[6:2], 12'b0}))
+  `define rv64_extract_caddi_caddiw_candi_imm(cinstr) 64'($signed({cinstr[12], cinstr[6:2]}))
+  `define rv64_extract_cslli_csrli_csrai_imm(cinstr)  64'({cinstr[12], cinstr[6:2]})
 
   // I extension
   `define RV64_LUI        `rv64_u_type(`RV64_LUI_OP)
