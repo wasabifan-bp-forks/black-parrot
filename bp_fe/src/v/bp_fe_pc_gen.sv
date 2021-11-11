@@ -237,7 +237,7 @@ module bp_fe_pc_gen
   assign ovr_ret    = btb_miss_ras & is_ret;
   assign ovr_taken  = btb_miss_br & ((is_br & pred_if2_r.pred) | is_jal);
   assign ovr_o      = ovr_taken | ovr_ret;
-  assign br_tgt_lo  = pc_if2_r + scan_instr.imm;
+  assign br_tgt_lo  = pc_if2_r + scan_instr.pc_rel_jump_offset;
   assign fetch_pc_o = pc_if2_r;
 
   bp_fe_branch_metadata_fwd_s br_metadata_site;

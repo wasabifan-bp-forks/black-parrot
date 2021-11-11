@@ -47,30 +47,36 @@ module bp_fe_instr_scan
     begin
       scan_cast_o = '0;
 
-
-      if (instr_op inside { `RV64_C0_OP, `RV64_C1_OP, `RV64_C2_OP })
+      if (is_compressed)
         begin
           unique casez (instr_i)
-            // TODO: handle EBREAK and any others which take precedence over subsets of this encoding space
-            `RV64_CBEQZ, `RV64_CBNEZ: scan_cast_o.branch = 1'b1;
-            `RV64_CJ:                 scan_cast_o.jal    = 1'b1;
+            `RV64_CEBREAK: begin /* no-op, C.EBREAK takes precedence over C.JALR */ end
+            `RV64_CBEQZ, `RV64_CBNEZ:
+              begin
+                scan_cast_o.branch              = 1'b1;
+                scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cb_imm(instr_i);
+              end
+            `RV64_CJ:
+              begin
+                scan_cast_o.jal                 = 1'b1;
+                scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cj_imm(instr_i);
+              end
             `RV64_CJR:
               begin
-                scan_cast_o.jalr = 1'b1;
-                scan_cast_o.ret  = src_link;
+                scan_cast_o.jalr                = 1'b1;
+                scan_cast_o.ret                 = src_link;
+                scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cr_imm(instr_i);
               end
             `RV64_CJALR:
               begin
-                scan_cast_o.jalr = 1'b1;
-                scan_cast_o.call = 1'b1;
+                scan_cast_o.jalr                = 1'b1;
+                scan_cast_o.call                = 1'b1;
                 // To match the behavior as if this instruction had already been expanded, we label
                 // a c.jalr as a return iff it is sourcing from ra and writing to t0 (the alternate
                 // link register).
-                scan_cast_o.ret = src_link && jalr_src != ra_reg_addr_gp;
+                scan_cast_o.ret                = src_link && jalr_src != ra_reg_addr_gp;
               end
           endcase
-
-          // TODO: imm
         end
       else
         begin
@@ -81,13 +87,10 @@ module bp_fe_instr_scan
           scan_cast_o.ret    = (instr_cast_rtype_i.opcode == `RV64_JALR_OP) && src_link && !rtype_dest_src_eq;
 
           unique casez (instr_cast_rtype_i.opcode)
-            `RV64_BRANCH_OP: scan_cast_o.imm = `rv64_signext_b_imm(instr_i);
-            `RV64_JAL_OP   : scan_cast_o.imm = `rv64_signext_j_imm(instr_i);
-            default        : scan_cast_o.imm = '0;
+            `RV64_BRANCH_OP: scan_cast_o.pc_rel_jump_offset = `rv64_signext_b_imm(instr_i);
+            `RV64_JAL_OP   : scan_cast_o.pc_rel_jump_offset = `rv64_signext_j_imm(instr_i);
+            default        : scan_cast_o.pc_rel_jump_offset = '0;
           endcase
         end
-
     end
-
 endmodule
-

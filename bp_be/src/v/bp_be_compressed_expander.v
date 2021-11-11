@@ -39,44 +39,48 @@ module bp_be_compressed_expander
 
       funct3 = cinstr_i[15:13];
 
+      // TODOs:
+      // Produce appropriate offset (+2 instead of +4) for JALRs
+
       casez (cinstr_i)
-        `RV64_CADDI16SP:
-          imm = `rv64_extract_caddi16sp_imm(cinstr_i);
-        `RV64_CADDI4SPN:
-          imm = `rv64_extract_caddi4spn_imm(cinstr_i);
-        `RV64_CLWSP, `RV64_CSWSP:
-          imm = `rv64_extract_clwsp_cswsp_imm(cinstr_i);
-        `RV64_CLDSP, `RV64_CSDSP:
-          imm = `rv64_extract_cldsp_csdsp_imm(cinstr_i);
-        `RV64_CLW, `RV64_CSW:
-          imm = `rv64_extract_clw_csw_imm(cinstr_i);
-        `RV64_CLD, `RV64_CSD:
-          imm = `rv64_extract_cld_csd_imm(cinstr_1);
-        `RV64_CJ:
-          imm = `rv64_extract_cj_imm(cinstr_1);
-        `RV64_CBEQZ, `RV64_CBNEZ:
-          imm = `rv64_extract_cbeqz_cbnez_imm(cinstr_1);
-        `RV64_CLI:
-          imm = `rv64_extract_cli_imm(cinstr_1);
-        `RV64_CLUI:
-          imm =`rv64_extract_clui_imm(cinstr_1);
-        `RV64_CADDI, `RV64_CADDIW, `RV64_CANDI:
-          imm = `rv64_extract_caddi_caddiw_candi_imm(cinstr_1);
-        `RV64_CSLLI, `RV64_CSRLI, `RV64_CSRAI:
-          imm = `rv64_extract_cslli_csrli_csrai_imm(cinstr_1);
-        default: imm = '0;
+        `RV64_CADDI16SP:                        imm = `rv64_extract_caddi16sp_imm(cinstr_i);
+        `RV64_CADDI4SPN:                        imm = `rv64_extract_caddi4spn_imm(cinstr_i);
+        `RV64_CLWSP, `RV64_CSWSP:               imm = `rv64_extract_clwsp_cswsp_imm(cinstr_i);
+        `RV64_CLDSP, `RV64_CSDSP:               imm = `rv64_extract_cldsp_csdsp_imm(cinstr_i);
+        `RV64_CLW, `RV64_CSW:                   imm = `rv64_extract_clw_csw_imm(cinstr_i);
+        `RV64_CLD, `RV64_CSD:                   imm = `rv64_extract_cld_csd_imm(cinstr_1);
+        `RV64_CJ:                               imm = `rv64_extract_cj_imm(cinstr_1);
+        `RV64_CBEQZ, `RV64_CBNEZ:               imm = `rv64_extract_cbeqz_cbnez_imm(cinstr_1);
+        `RV64_CLI:                              imm = `rv64_extract_cli_imm(cinstr_1);
+        `RV64_CLUI:                             imm = `rv64_extract_clui_imm(cinstr_1);
+        `RV64_CADDI, `RV64_CADDIW, `RV64_CANDI: imm = `rv64_extract_caddi_caddiw_candi_imm(cinstr_1);
+        `RV64_CSLLI, `RV64_CSRLI, `RV64_CSRAI:  imm = `rv64_extract_cslli_csrli_csrai_imm(cinstr_1);
+        default:                                imm = '0;
       endcase
 
       casez (cinstr_i)
-        // These cases have priority over the others
+        // Some instructions share opcode encoding space with other instructions, conditioned on
+        // their parameters. The instructions which take precedence over others in their group are
+        // listed at the top for clarity.
+
+        // C.ADDI16SP shares opcode with C.LUI, taking precedence only when rd = x2
+        // C.EBREAK, C.JALR and C.ADD share opcode
+        //   C.EBREAK takes precedence only when rs1/rd = rs2 = 0
+        //   C.JALR takes precedence when rs1 != 0 and rs2 = 0
+        //   C.ADD is in effect otherwise  
+
         // C.ADDI16SP -> addi x2, x2, nzimm[9:4]
         `RV64_CADDI16SP: instr_o =
           `rv64_build_i_type(`RV64_OP_IMM_OP, rd, 3'b000, rd, imm);
+        // C.EBREAK   -> ebreak
+        `RV64_CEBREAK: instr_o = `RV64_EBREAK;
+        // C.JALR     -> jalr x1, 0(rs1)
+        `RV64_CJALR: instr_o =
+          `rv64_build_i_type(`RV64_JALR_OP, rv64_link_reg_addr_gp, 3'b000, rs1, zero_imm);
+
         // C.ADDI4SPN -> addi rd', x2, nzuimm[9:2]
         `RV64_CADDI4SPN: instr_o =
           `rv64_build_i_type(`RV64_OP_IMM_OP, rd, 3'b000, rd, imm);
-        // C.EBREAK   -> ebreak
-        `RV64_CEBREAK: instr_o = `RV64_EBREAK;
         // C.LWSP     -> lw rd, offset[7:2] (x2)
         // C.LDSP     -> ld rd, offset[8:3] (x2)
         `RV64_CLWSP, `RV64_CLDSP: instr_o =
@@ -99,9 +103,6 @@ module bp_be_compressed_expander
         // C.JR       -> jalr x0, 0(rs1)
         `RV64_CJR: instr_o =
           `rv64_build_i_type(`RV64_JALR_OP, rv64_zero_reg_addr_gp, 3'b000, rs1, zero_imm);
-        // C.JALR     -> jalr x1, 0(rs1)
-        `RV64_CJALR: instr_o =
-          `rv64_build_i_type(`RV64_JALR_OP, rv64_link_reg_addr_gp, 3'b000, rs1, zero_imm);
         // C.BEQZ     -> beq rs1', x0, offset[8:1]
         `RV64_CBEQZ: instr_o =
           `rv64_build_b_type(`RV64_BRANCH_OP, 3'b000, rs1p, rv64_zero_reg_addr_gp, imm);
