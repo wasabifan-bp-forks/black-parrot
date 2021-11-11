@@ -14,6 +14,7 @@
   localparam rv64_shamtw_width_gp   = 5;
   localparam rv64_opcode_width_gp   = 7;
   localparam rv64_funct3_width_gp   = 3;
+  localparam rv64_funct4_width_gp   = 4;
   localparam rv64_funct7_width_gp   = 7;
   localparam rv64_csr_addr_width_gp = 12;
   localparam rv64_imm20_width_gp    = 20;
@@ -21,6 +22,7 @@
   localparam rv64_imm11to5_width_gp = 7;
   localparam rv64_imm4to0_width_gp  = 5;
   localparam rv64_priv_width_gp     = 2;
+  localparam rv64_op_width_gp       = 2;
 
   typedef struct packed
   {
@@ -104,6 +106,14 @@
       rv64_instr_btype_s    btype;
     }  t;
   }  rv64_instr_s;
+
+  typedef struct packed
+  {
+    logic [rv64_funct4_width_gp-1:0]   funct4;
+    logic [rv64_reg_addr_width_gp-1:0] rs1_addr;
+    logic [rv64_reg_addr_width_gp-1:0] rs2_addr;
+    logic [rv64_op_width_gp-1:0]       op;
+  }  rv64_instr_crtype_s;
 
   typedef struct packed
   {
