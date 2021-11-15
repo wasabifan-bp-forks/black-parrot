@@ -2,7 +2,6 @@
 #   trace_gen.py
 #
 
-import numpy as np
 
 class TraceGen:
 
@@ -23,7 +22,7 @@ class TraceGen:
   def send_load(self, vaddr, ptag, uncached):
     packet = "0001_"
     
-    if(uncached):
+    if uncached:
       packet += "1_"
     else:
       packet += "0_"

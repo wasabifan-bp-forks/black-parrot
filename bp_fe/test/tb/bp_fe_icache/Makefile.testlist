@@ -1,7 +1,8 @@
 
 ICACHE_TESTLIST := \
 	test_load \
-	test_uncached_load
+	test_uncached_load \
+	test_misaligned_load
 
 ifeq ($(UCE_P),1)
 CE := UCE
