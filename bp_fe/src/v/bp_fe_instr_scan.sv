@@ -31,7 +31,7 @@ module bp_fe_instr_scan
   bp_fe_instr_scan_s scan_cast_o;
 
   assign instr_cast_rtype_i = instr_i;
-  assign instr_cast_crtype_i = instr_i;
+  assign instr_cast_crtype_i = instr_i[rv64_c_instr_width_gp-1:0];
   assign scan_o = scan_cast_o;
 
   // Lower bits are not 2'11, i.e. this is a 16-bit instruction

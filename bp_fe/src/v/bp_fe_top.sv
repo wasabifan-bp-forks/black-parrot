@@ -385,6 +385,7 @@ module bp_fe_top
         fe_queue_cast_o = '0;
         fe_queue_cast_o.msg_type                      = e_fe_fetch;
         fe_queue_cast_o.msg.fetch.pc                  = fetch_pc_lo;
+        // fe_queue_cast_o.msg.fetch.fetch_type          = /* TODO */;
         fe_queue_cast_o.msg.fetch.instr               = fetch_li;
         fe_queue_cast_o.msg.fetch.branch_metadata_fwd = fetch_br_metadata_fwd_lo;
       end
