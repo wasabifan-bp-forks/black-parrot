@@ -14,10 +14,27 @@
   `include "bp_fe_icache_defines.svh"
 
   /*
-   * bp_fe_instr_scan_s specifies metadata about the instruction, including FE-special opcodes
-   *   and the calculated branch target
+   * bp_fe_instr_scan_s includes bp_fe_instr_scan_metadata_s metadata about this halfword
+   * instruction, plus source information if the halfword contains two 16-bit compressed
+   * instructions.
+   *
+   * source_compressed_upper_half indicates that the metadata was sourced from the second 16-bit
+   * compressed instruction in the 32-bit word -- i.e., it is "1" iff the first half is a
+   * non-control-flow compressed instruction and the second half is a compressed instruction.
    */
-  `define declare_bp_fe_instr_scan_s(vaddr_width_mp) \
+  `define declare_bp_fe_instr_scan_s(vaddr_width_mp)     \
+    `declare_bp_fe_instr_scan_metadata_s(vaddr_width_mp) \
+    typedef struct packed                                \
+    {                                                    \
+      bp_fe_instr_scan_metadata_s metadata               \
+      logic source_compressed_upper_half                 \
+    }  bp_fe_instr_scan_s;
+
+  /*
+   * bp_fe_instr_scan_metadata_s specifies metadata about the instruction, including FE-special
+   * opcodes and the calculated branch target.
+   */
+  `define declare_bp_fe_instr_scan_metadata_s(vaddr_width_mp) \
     typedef struct packed                            \
     {                                                \
       logic branch;                                  \
@@ -26,7 +43,7 @@
       logic call;                                    \
       logic ret;                                     \
       logic [vaddr_width_mp-1:0] pc_rel_jump_offset; \
-    }  bp_fe_instr_scan_s;
+    }  bp_fe_instr_scan_metadata_s;
 
   `define declare_bp_fe_branch_metadata_fwd_s(btb_tag_width_mp, btb_idx_width_mp, bht_idx_width_mp, ghist_width_mp, bht_row_width_mp) \
     typedef struct packed                                                                         \
@@ -58,7 +75,11 @@
     }  bp_fe_pred_s
 
   `define bp_fe_instr_scan_width(vaddr_width_mp) \
+    (`bp_fe_instr_scan_width(vaddr_width_p) + 1)
+
+  `define bp_fe_instr_scan_metadata_width(vaddr_width_mp) \
     (5 + vaddr_width_mp)
+
 
   `define bp_fe_pred_width(vaddr_width_mp, ghist_width_mp, bht_row_width_mp) \
     (5 + bht_row_width_mp + ghist_width_mp)

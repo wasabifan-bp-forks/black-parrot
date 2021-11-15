@@ -1,0 +1,74 @@
+/*
+ * bp_fe_instr_scan_c.sv
+ *
+ * Instr scan check if the compressed instruction is a branch, jump, or special variants thereof.
+*/
+
+`include "bp_common_defines.svh"
+`include "bp_fe_defines.svh"
+
+module bp_fe_instr_scan_c
+ import bp_common_pkg::*;
+ import bp_fe_pkg::*;
+ #(parameter bp_params_e bp_params_p = e_bp_default_cfg
+   `declare_bp_proc_params(bp_params_p)
+
+   , localparam instr_scan_metadata_width_lp = `bp_fe_instr_scan_metadata_width(vaddr_width_p)
+   )
+  (input [c_instr_width_gp-1:0]                c_instr_i
+
+   // scan_o only valid if is_compressed_instr_o is 1
+   , output [instr_scan_metadata_width_lp-1:0] scan_o,
+   , output logic is_compressed_instr_o
+  );
+
+  localparam ra_reg_addr_gp = 5'h1;
+  localparam t0_reg_addr_gp = 5'h5;
+
+  `declare_bp_fe_instr_scan_metadata_s(vaddr_width_p);
+
+  rv64_instr_crtype_s instr_cast_crtype_i;
+  bp_fe_instr_scan_s scan_cast_o;
+
+  assign instr_cast_crtype_i = c_instr_i;
+  assign scan_o = scan_cast_o;
+
+  // Lower bits are not 2'11, i.e. this is a 16-bit instruction
+  assign is_compressed_instr_o = instr_cast_crtype_i.op inside { `RV64_C0_OP, `RV64_C1_OP, `RV64_C2_OP };
+
+  wire jalr_src  = instr_cast_crtype_i.rs1_addr;
+  wire src_link  = jalr_src inside {ra_reg_addr_gp, t0_reg_addr_gp};
+
+  always_comb
+    begin
+      scan_cast_o = '0;
+
+      unique casez (instr_i)
+        `RV64_CEBREAK: begin /* no-op, C.EBREAK takes precedence over C.JALR */ end
+        `RV64_CBEQZ, `RV64_CBNEZ:
+          begin
+            scan_cast_o.branch              = 1'b1;
+            scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cbeqz_cbnez_imm(instr_i);
+          end
+        `RV64_CJ:
+          begin
+            scan_cast_o.jal                 = 1'b1;
+            scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cj_imm(instr_i);
+          end
+        `RV64_CJR:
+          begin
+            scan_cast_o.jalr                = 1'b1;
+            scan_cast_o.ret                 = src_link;
+          end
+        `RV64_CJALR:
+          begin
+            scan_cast_o.jalr                = 1'b1;
+            scan_cast_o.call                = 1'b1;
+            // To match the behavior as if this instruction had already been expanded, we label
+            // a c.jalr as a return iff it is sourcing from ra and writing to t0 (the alternate
+            // link register).
+            scan_cast_o.ret                = src_link && jalr_src != ra_reg_addr_gp;
+          end
+        default: begin /* all other instructions are uninteresting to the frontend */ end
+      endcase
+endmodule

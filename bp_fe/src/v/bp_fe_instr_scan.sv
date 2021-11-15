@@ -1,5 +1,5 @@
 /*
- * bp_fe_instr_scan.v
+ * bp_fe_instr_scan.sv
  *
  * Instr scan check if the intruction is aligned, compressed, or normal instruction.
  * The entire block is implemented in combinational logic, achieved within one cycle.
@@ -27,70 +27,55 @@ module bp_fe_instr_scan
   `declare_bp_fe_instr_scan_s(vaddr_width_p);
 
   rv64_instr_rtype_s instr_cast_rtype_i;
-  rv64_instr_crtype_s instr_cast_crtype_i;
-  bp_fe_instr_scan_s scan_cast_o;
-
   assign instr_cast_rtype_i = instr_i;
-  assign instr_cast_crtype_i = instr_i[rv64_c_instr_width_gp-1:0];
+  // TODO: packed array?
+  wire instr_lower_half_i = instr_i[ c_instr_width_gp-1:0 ];
+  wire instr_upper_half_i = instr_i[ instr_width_gp-1  :c_instr_width_gp ];
+
+  bp_fe_instr_scan_s scan_cast_o;
   assign scan_o = scan_cast_o;
 
-  // Lower bits are not 2'11, i.e. this is a 16-bit instruction
-  wire is_compressed = instr_cast_crtype_i.op inside { `RV64_C0_OP, `RV64_C1_OP, `RV64_C2_OP };
+  bp_fe_instr_scan_metadata_s whole_instruction_scan_metadata_lo;
+  bp_fe_instr_scan_metadata_s lower_half_scan_metadata_lo, upper_half_scan_metadata_lo;
+  logic lower_half_is_compressed_instr_lo, upper_half_is_compressed_instr_lo;
 
-  wire jalr_src = is_compressed ? instr_cast_crtype_i.rs1_addr : instr_cast_rtype_i.rs1_addr;
+  bp_fe_instr_scan_c
+   #(.bp_params_p(bp_params_p))
+   lower_half_scan
+   (.c_instr_i             (instr_lower_half_i)
 
+   ,.scan_o                (lower_half_scan_metadata_lo)
+   ,.is_compressed_instr_o (lower_half_is_compressed_instr_lo)
+   );
+
+  bp_fe_instr_scan_c
+   #(.bp_params_p(bp_params_p))
+   upper_half_scan
+   (.c_instr_i             (instr_upper_half_i)
+
+   ,.scan_o                (upper_half_scan_metadata_lo)
+   ,.is_compressed_instr_o (upper_half_is_compressed_instr_lo)
+   );
+
+   // TODO: logic to mux between possible metadata sources and choose the appropriate one, setting source_compressed_upper_half
+
+
+  wire rtype_jalr_src    = instr_cast_rtype_i.rs1_addr;
   wire rtype_dest_link   = (instr_cast_rtype_i.rd_addr inside {ra_reg_addr_gp, t0_reg_addr_gp});
   wire rtype_dest_src_eq = (instr_cast_rtype_i.rd_addr == instr_cast_rtype_i.rs1_addr);
-  wire src_link          = jalr_src inside {ra_reg_addr_gp, t0_reg_addr_gp};
+  wire rtype_src_link    = rtype_jalr_src inside {ra_reg_addr_gp, t0_reg_addr_gp};
 
   always_comb
     begin
-      scan_cast_o = '0;
+      whole_instruction_scan_metadata_lo.branch = (instr_cast_rtype_i.opcode == `RV64_BRANCH_OP);
+      whole_instruction_scan_metadata_lo.jal    = (instr_cast_rtype_i.opcode == `RV64_JAL_OP);
+      whole_instruction_scan_metadata_lo.jalr   = (instr_cast_rtype_i.opcode == `RV64_JALR_OP);
+      whole_instruction_scan_metadata_lo.call   = (instr_cast_rtype_i.opcode inside {`RV64_JAL_OP, `RV64_JALR_OP}) && rtype_dest_link;
+      whole_instruction_scan_metadata_lo.ret    = (instr_cast_rtype_i.opcode == `RV64_JALR_OP) && rtype_src_link && !rtype_dest_src_eq;
 
-      if (is_compressed)
-        begin
-          unique casez (instr_i)
-            `RV64_CEBREAK: begin /* no-op, C.EBREAK takes precedence over C.JALR */ end
-            `RV64_CBEQZ, `RV64_CBNEZ:
-              begin
-                scan_cast_o.branch              = 1'b1;
-                scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cbeqz_cbnez_imm(instr_i);
-              end
-            `RV64_CJ:
-              begin
-                scan_cast_o.jal                 = 1'b1;
-                scan_cast_o.pc_rel_jump_offset  = `rv64_extract_cj_imm(instr_i);
-              end
-            `RV64_CJR:
-              begin
-                scan_cast_o.jalr                = 1'b1;
-                scan_cast_o.ret                 = src_link;
-              end
-            `RV64_CJALR:
-              begin
-                scan_cast_o.jalr                = 1'b1;
-                scan_cast_o.call                = 1'b1;
-                // To match the behavior as if this instruction had already been expanded, we label
-                // a c.jalr as a return iff it is sourcing from ra and writing to t0 (the alternate
-                // link register).
-                scan_cast_o.ret                = src_link && jalr_src != ra_reg_addr_gp;
-              end
-            default: begin /* all other instructions are uninteresting to the frontend */ end
-          endcase
-        end
-      else
-        begin
-          scan_cast_o.branch = (instr_cast_rtype_i.opcode == `RV64_BRANCH_OP);
-          scan_cast_o.jal    = (instr_cast_rtype_i.opcode == `RV64_JAL_OP);
-          scan_cast_o.jalr   = (instr_cast_rtype_i.opcode == `RV64_JALR_OP);
-          scan_cast_o.call   = (instr_cast_rtype_i.opcode inside {`RV64_JAL_OP, `RV64_JALR_OP}) && rtype_dest_link;
-          scan_cast_o.ret    = (instr_cast_rtype_i.opcode == `RV64_JALR_OP) && src_link && !rtype_dest_src_eq;
-
-          unique casez (instr_cast_rtype_i.opcode)
-            `RV64_BRANCH_OP: scan_cast_o.pc_rel_jump_offset = `rv64_signext_b_imm(instr_i);
-            `RV64_JAL_OP   : scan_cast_o.pc_rel_jump_offset = `rv64_signext_j_imm(instr_i);
-            default        : scan_cast_o.pc_rel_jump_offset = '0;
-          endcase
-        end
-    end
+      unique casez (instr_cast_rtype_i.opcode)
+        `RV64_BRANCH_OP: whole_instruction_scan_metadata_lo.pc_rel_jump_offset = `rv64_signext_b_imm(instr_i);
+        `RV64_JAL_OP   : whole_instruction_scan_metadata_lo.pc_rel_jump_offset = `rv64_signext_j_imm(instr_i);
+        default        : whole_instruction_scan_metadata_lo.pc_rel_jump_offset = '0;
+      endcase
 endmodule

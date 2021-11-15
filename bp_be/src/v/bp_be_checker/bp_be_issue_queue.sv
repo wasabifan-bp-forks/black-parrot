@@ -151,6 +151,7 @@ module bp_be_issue_queue
   always_comb
     begin
       issue_pkt_li = '0;
+      // TODO
 
       // Pre-decode
       issue_pkt_li.csr_w_v = (instr inside {`RV64_CSRRW, `RV64_CSRRWI})
